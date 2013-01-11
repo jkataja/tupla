@@ -1,0 +1,15 @@
+Known problems:
+
+1.
+
+When compiled with gcc 4.6 from ports, static boost libraries compiled
+with apple gcc causes errors:
+
+sup(38484) malloc: *** error for object 0x7fff7f191860: pointer being freed was not allocated
+*** set a breakpoint in malloc_error_break to debug
+Abort trap: 6
+
+
+See:
+http://stackoverflow.com/questions/4697859/mac-os-x-and-static-boost-libs-stdstring-fail
+
