@@ -6,42 +6,32 @@
 
 using namespace sup;
 
-/*
-out_sort(std::ostream&, uint32 p, size_t n, uint32 a, uint32 b, uint32 c, uint32 d) 
+bool sup::suffixsort::out_incorrect_order(std::ostream& out)
 {
-	out << "s="<<s<<" t="<<t<< " n=" << n << " " << ltn << "," <<  eqn << "," <<  gtn <<std::endl;
-// XXX debug
-	for (size_t i = p ; i < p+n ; ++i)  {
-		std::string str( (text + sa[i]) );
-		str.append("$");
-		str.resize(34);
-		std::replace( str.begin(), str.end(), '\n', '#');
-		std::replace( str.begin(), str.end(), '\t', '#');
-		uint64 w = k(i);
-
-		if (i >= (p+b-a)) out << ">";
-		if (i >= (pn+d-c)) out << "<";
-		if (i == a) out << "a";
-		if (i == b) out << "b";
-		if (i == c) out << "c";
-		if (i == d) out << "d";
-
-		out << "\t" << i << "\t" << sa[i] << "\t"  
-			<< std::hex << std::setw(16) << std::setfill('0') << k(i)
-			<< std::dec;
-		if (w < v)
-			out << " < ";
-		else if (w > v)
-			out << " > ";
-		else
-			out << " = ";
-		out << "'" << str << "'" << std::endl;
+	uint32 wrongorder = 0;
+	for (size_t i = 1 ; i<len ; ++i) {
+		std::string a( (text + sa[i]) );
+		std::string b( (text + sa[i-1]) );
+		if (a < b) {
+			out << (i-1) << ": "<< a << std::endl;
+			out << (i) << ": "<< b << std::endl << std::endl;
+			++wrongorder;
+		}
 	}
-	out << std::endl;
-// XXX debug
+	out << SELF << ": incorrect orders " << wrongorder << std::endl;
+	return (wrongorder > 0);
 }
-*/
 
+uint32 sup::suffixsort::has_dupes()
+{
+	uint32 * match = new uint32[len]();
+	uint32 dupes  = 0;
+	for (size_t i = 0 ; i<len ; ++i) {
+		dupes += ( ++match[ sa[i] ] > 1 );
+	}
+	delete [] match;
+	return dupes;
+}
 
 void sup::suffixsort::out_sa(uint32 p, size_t n, std::ostream& out)
 {
@@ -138,15 +128,7 @@ void sup::suffixsort::tqsort(uint32 p, size_t n)
 		for (uint32 i = p + 1 ; i < p + n ; ++i)
 			for (uint32 j = i ; j > p && k(j-1) > k(j) ; --j)
 				swap(j, j-1);
-		// Renumber
-		uint32 g = p;
-		if (isa[ sa[p] ] != g) ++groups;
-		isa[ sa[p] ] = g;
-		for (uint32 i = p + 1 ; i < p + n ; ++i) {
-			if (k(i) > k(i-1)) { ++groups; ++g; }
-			isa[ sa[i] ] = g;
-		}
-			
+		// TODO assign
 		return;
 	}
 */
@@ -179,16 +161,6 @@ void sup::suffixsort::tqsort(uint32 p, size_t n)
 	const uint32 gtn = d-c;
 	const uint32 eqn = n - ltn - gtn;
 
-/*
-	if (p >= 235 && p <= 248) { 
-	std::cerr << "sort("<<p<<","<<n<<") -> " 
-		<< "(" << p << "," << ltn << ") "
-		<< "(" << (p+b-a) << "," << eqn << ") "
-		<< "(" << (pn-gtn) << "," << gtn << ") " 
-		<< std::endl;
-		out_sa(p,n,std::cerr); 
-	}
-	*/
 	if (ltn > 0) sort(p, ltn);
 	assign(p+ltn, eqn); 
 	if (gtn > 0) sort(pn-gtn, gtn);
@@ -237,7 +209,6 @@ void sup::suffixsort::run_sequential()
 	init();
 
 	// Doubling steps until every suffix is assigned
-
 	for (h = 1 ; (groups < len && h < len) ; h <<= 1) {
 		groups = 0;
 
@@ -257,29 +228,10 @@ void sup::suffixsort::run_sequential()
 	}
 
 #ifndef NDEBUG
-	{
-		uint32 wrongorder = 0;
-		for (size_t i = 1 ; i<len ; ++i) {
-			std::string a( (text + sa[i]) );
-			std::string b( (text + sa[i-1]) );
-			if (a < b) {
-				std::cerr<<(i-1)<<": "<< a << std::endl;
-				std::cerr<<(i)<<": "<< b << std::endl<< std::endl;
-				++wrongorder;
-			}
+	out_incorrect_order(std::cerr);
 
-		}
-		std::cerr << SELF << ": incorrect order " << wrongorder << std::endl;
-	}
-	{
-		uint32 * match = new uint32[len]();
-		uint32 dupes  = 0;
-		for (size_t i = 0 ; i<len ; ++i) {
-			dupes += ( ++match[ sa[i] ] > 1 );
-		}
-		delete [] match;
-		std::cerr << SELF << ": dupes " << dupes << std::endl;
-	}
+	uint32 dupes = has_dupes();
+	std::cerr << SELF << ": dupes " << dupes << std::endl;
 #endif
 
 	out_sa(std::cerr);

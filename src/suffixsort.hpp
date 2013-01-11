@@ -38,8 +38,10 @@ class suffixsort {
 
 	// Debugging
 	void out_sa(std::ostream&);
-	void out_sa(uint32 p, size_t n, std::ostream& out);
+	void out_sa(uint32, size_t, std::ostream&);
 	void out_isa(std::ostream&);
+	bool out_incorrect_order(std::ostream&);
+	uint32 has_dupes();
 	
 	// Allocate and initialize suffix array and inverse suffix array
 	// Sort first round using counting sort on first character
