@@ -6,6 +6,13 @@
 
 using namespace sup;
 
+bool sup::suffixsort::eq_sa_isa()
+{
+	for (size_t i = 0 ; i<len ; ++i)
+		if (isa[ sa[i] ] != i) return false;
+	return true;
+}
+
 bool sup::suffixsort::out_incorrect_order(std::ostream& out)
 {
 	uint32 wrongorder = 0;
@@ -43,10 +50,8 @@ void sup::suffixsort::out_sa(uint32 p, size_t n, std::ostream& out)
 		if (str.length() > 34) str.erase(34);
 		std::replace( str.begin(), str.end(), '\n', '#');
 		std::replace( str.begin(), str.end(), '\t', '#');
-		out << std::hex << i << std::dec << "\t"  
-			<< sa[i] << "\t"  
-			<< std::hex << std::setw(16) << std::setfill('0') << k(i) 
-			<< std::dec;
+		out << std::hex << i << "\t"  << sa[i] << "\t"  
+			<< std::setw(16) << std::setfill('0') << k(i) << std::dec;
 		if (k(i) < v) out << " <";
 		if (k(i) == v) out << " =";
 		if (k(i) > v) out << " >";
@@ -56,15 +61,15 @@ void sup::suffixsort::out_sa(uint32 p, size_t n, std::ostream& out)
 
 void sup::suffixsort::out_sa(std::ostream& out)
 {
-	out << "i\tsa[i]\torder            suffix" << std::endl;
+	out << "i\tsa[i]\tsorted\torder            suffix" << std::endl;
 	for (size_t i = 0 ; i<len ; ++i)  {
 		std::string str( (text + sa[i]) );
 		str.append("$");
 		if (str.length() > 36) str.erase(36);
 		std::replace( str.begin(), str.end(), '\n', '#');
 		std::replace( str.begin(), str.end(), '\t', '#');
-		out << std::hex << i << std::dec << "\t"  
-			<< sa[i] << "\t"  
+		out << std::hex << i << "\t"  << sa[i] << "\t"  
+			<< std::dec << sorted[i] << "\t" 
 			<< std::hex << std::setw(16) << std::setfill('0') << k(i) 
 			<< std::dec << " '" << str << "'" << std::endl;
 	}
@@ -72,16 +77,16 @@ void sup::suffixsort::out_sa(std::ostream& out)
 
 void sup::suffixsort::out_isa(std::ostream& out)
 {
-	out << "i\telem[i]\torder            suffix" << std::endl;
+	out << "i\torder            suffix" << std::endl;
 	for (size_t i = 0 ; i < len ; ++i) {
 		std::string str( (text + i) );
 		str.append("$");
-		if (str.length() > 44) str.erase(44);
+		if (str.length() > 52) str.erase(52);
 		std::replace( str.begin(), str.end(), '\n', '#');
 		std::replace( str.begin(), str.end(), '\t', '#');
-		out << std::hex << i << std::dec << "\t"  
-			<< elem[i] << "\t" 
-			<< std::hex << std::setw(16) << std::setfill('0') << k(sa[i]) 
+		out << std::hex << i << "\t" 
+			<< std::setw(8) << std::setfill('0') << isa[i]
+			<< std::setw(8) << std::setfill('0') << (i+h < len ? isa[i+h] : 0)
 			<< std::dec << " '" << str << "'" << std::endl;
 	}
 }
@@ -168,39 +173,50 @@ void sup::suffixsort::tqsort(uint32 p, size_t n)
 
 void sup::suffixsort::init()
 {
+	uint32 group[Alpha] = { Z256 };
 	uint32 count[Alpha] = { Z256 };
-	uint32 run[Alpha] = { Z256 };
 	
 	sa = new uint32[len];
 	isa = new uint32[len];
-	elem = new uint32[len];
+	sorted = new uint32[len];
 
 	bzero(sa, (len * sizeof(uint32)) );
 	bzero(isa, (len * sizeof(uint32)) );
-	bzero(elem, (len * sizeof(uint32)) );
+	bzero(sorted, (len * sizeof(uint32)) );
 
 	// Count character occurences
-	for (size_t i = 0 ; i < len ; ++i) {
-		++count[ (uint8)*(text + i) ];
-	}
-	// Starting index for character
-	uint32 sum = 0;
+	for (size_t i = 0 ; i < len ; ++i) 
+		++group[ (uint8)*(text + i) ];
+
+	// Starting index of each sorting group
+	uint32 f = 0; // First index in group
 	for (size_t i = 0 ; i < Alpha ; ++i) {
-		uint32 n = count[i];
-		groups += (n > 0);
-		run[i] = count[i] = sum;
-		elem[sum] += n;
-		sum += n;
+		uint32 n = group[i]; 
+		uint32 g = f + n - 1; // Last character in group
+		count[i] = f;
+		group[i] = g;
+		sorted[f] = (n == 1);
+		f += n;
 	}
+	uint32 p = 0; // Starting index of sorted group
+	uint32 sl = 0; // Length of sorted groups following p
 	for (size_t i = 0 ; i < len ; ++i) {
-		// Counting sort using starting character
-		sa[ run[  (uint8)*(text + i) ]++ ] = i;
-		// Assign sorting key for suffix starting at index
-		isa[i] = count[ (uint8)*(text + i) ];
-		// Count elements in each group
-		++elem[ isa[i] ];
+		// Counting sort f..g
+		sa[ count[  (uint8)*(text + i) ]++ ] = i;
+		// Sorting key for range f..g is g
+		isa[i] = group[ (uint8)*(text + i) ];
+		// Increase sorted group length
+		if (uint32 s = sorted[i]) {
+			sl += s; 
+			continue;
+		} 
+		// Combine sorted group before i
+		if (sl > 0) {
+			sorted[p] = sl; 
+			sl = 0;
+		}
+		p = i + 1;
 	}
-	std::cerr << SELF << ": alphabet size " << groups << std::endl; 
 }
 
 void sup::suffixsort::run_sequential()
@@ -208,45 +224,49 @@ void sup::suffixsort::run_sequential()
 	// Allocate and initialize with counting sort
 	init();
 
-	// Doubling steps until every suffix is assigned
+	// Doubling steps until number of sorting groups matches length
+	uint32 groups = 0;
 	for (h = 1 ; (groups < len && h < len) ; h <<= 1) {
+		uint32 p = 0; // Starting index of sorted group
+		uint32 sl = 0; // Sorted groups length following start
 		groups = 0;
-
-		// Sort each group of h-order suffixes
-		uint32 p = 0;
-		for (size_t i = 0 ; i <= len ; ++i) {
-			if (i == len || isa[ sa[i] ] != p) {
-				sort(p, i-p);
-				p = i;
+		for (size_t i = 0 ; i < len ; ) {
+			// Skip sorted group
+			if (uint32 s = sorted[i]) {
+				i += s; sl += s; groups += s;
+			} 
+			else {
+				// Combine sorted group before i
+				if (sl > 0) {
+					sorted[p] = sl; 
+					sl = 0;
+				}
+				// Sort unsorted group i..g
+				uint32 g = isa[ sa[i] ] + 1;
+				sort(i, g-i);
+				p = i = g;
 			}
 		}
+		// Combine sorted group at end
+		if (sl > 0) sorted[p] = sl;
 
 		std::cerr << SELF << ": doubling " << ffs(h) 
 				<< " with " << groups << " groups" << std::endl;
-
-		//out_sa(std::cerr);
 	}
 
 #ifndef NDEBUG
 	out_incorrect_order(std::cerr);
 
 	uint32 dupes = has_dupes();
-	std::cerr << SELF << ": dupes " << dupes << std::endl;
+	std::cerr << SELF << ": duplicates " << dupes << std::endl;
+
+	if (!eq_sa_isa())
+		std::cerr << SELF << ": SA and ISA are not consistent" << std::endl;
 #endif
 
-	out_sa(std::cerr);
-
 	if (groups != len) {
-		throw std::runtime_error("could not find order for all suffixes");
+		throw std::runtime_error("unable to find unique values for all suffixes");
 	}
-
-		/*
-		std::cerr << "final"<< std::endl; 
-		out_isa(std::cerr);
-		std::cerr<< std::endl;
-		out_sa(std::cerr);
-		std::cerr<< std::endl;
-		*/
 
 	finished_sa = true;
 }

@@ -1,6 +1,10 @@
 /**
  * Doubling suffix sort. 
  *
+ * Impelements prefix doubling as described in:
+ * N. Jesper Larsson & Kunihiko Sadakane: Faster Suffix Sorting
+ * LU-CS-TR:99-214 [LUNFD6/(NFCS-3140)/1{20/(1999)]
+ *
  * Uses using ternary split quick sort, based on:
  * Bentley & McIlroy 1993: Engineering a Sort Function
  * SOFTWARE—PRACTICE AND EXPERIENCE, VOL. 23(11), 1249–1265 (NOVEMBER 1993)
@@ -20,12 +24,11 @@ namespace sup {
 class suffixsort {
 
 	uint32 * sa;  // Suffixes sorted in h-order
-	uint32 * isa; // Sorting groups for suffix starting from index
-	uint32 * lcp; // LCP array computed from finished ISA
-	uint32 * elem; // Membership counts for sorting groups
+	uint32 * isa; // Sorting keys for suffix starting from index
+	uint32 * lcp; // LCP array built from completed ISA
+	uint32 * sorted; // Length of sorted group starting from index
 
 	uint64 h; // Current suffix doubling distance 
-	uint32 groups; // Count of groups with order assigned 
 
 	const char * const text; // Input
 	const uint32 len; // Length of input
@@ -42,6 +45,7 @@ class suffixsort {
 	void out_isa(std::ostream&);
 	bool out_incorrect_order(std::ostream&);
 	uint32 has_dupes();
+	bool eq_sa_isa();
 	
 	// Allocate and initialize suffix array and inverse suffix array
 	// Sort first round using counting sort on first character
@@ -51,8 +55,8 @@ class suffixsort {
 	// Based on Bentley-McIlroy 1993: Engineering a Sort Function
 	void tqsort(uint32, size_t);
 
-	// Comparison key for sorting groups
-	// Contains doubling pair ( ISA_h[i] , ISA_h[i+h] ) packed in long
+	// Comparison key for index p in suffix array
+	// Contains doubling pair ( ISA_h[p] , ISA_h[p+h] ) packed in long
 	inline uint64 k(const uint32 p)
 	{
 		return (sa[p] + h < len 
@@ -60,7 +64,7 @@ class suffixsort {
 				:  ((uint64)isa[ sa[p] ] << 32) ); 
 	}
 
-	// Determine median value of 3 ISA indexes
+	// Determine median value of three suffix array elements
 	// Returns index to position where median was found
 	// Based on Bentley-McIlroy 1993: Engineering a Sort Function
 	inline uint32 med3(const uint32 a, const uint32 b, const uint32 c)
@@ -71,7 +75,7 @@ class suffixsort {
 		                    : (k(b) > k(c) ? b : (k(a) < k(c) ? a : c) ) ); 
 	}
 
-	// Choose pivot value starting from p using pseudomedian
+	// Choose pivot value from n elements starting at p using pseudomedian
 	// Returns pair ( ISA_h[i] , ISA_h[i+h] ) packed in long
 	// Based on Bentley-McIlroy 1993: Engineering a Sort Function
 	inline uint64 choose_pivot(uint32 p, size_t n)
@@ -110,24 +114,24 @@ class suffixsort {
 	inline void sort(uint32 p, size_t n)
 	{
 		if (n == 0) return;
-
-		if (n == 1 && isa[ sa[p] ] != p) assign(p, 1);
 		else tqsort(p, n);
 	}
 
-	// Assign order for sorting group starting from p
+	// Renumber group at p..g with matching sorting key as g 
+	// Group number is last index with value to keep sort keys decreasing
 	inline void assign(uint32 p, size_t n)
 	{
-		if (n == 1) ++groups;
-
-		for (size_t i = p ; i < p+n ; ++i) isa[ sa[i] ] = p;
+		uint32 g = p + n - 1; 
+		if (n == 1) sorted[p] = 1;
+		for (size_t i = p ; i < p+n ; ++i) 
+			isa[ sa[i] ] = g;
 	}
 
 public:
 
 	suffixsort(const char * text, const uint32 len) 
-			: sa(0), isa(0), lcp(0), elem(0), 
-			  h(0), groups(0), text(text), len(len), 
+			: sa(0), isa(0), lcp(0), sorted(0), h(0), 
+			  text(text), len(len), 
 			  finished_sa(false), finished_lcp(false) { }
 
 	~suffixsort() { delete [] sa; delete [] isa; delete [] lcp; }
