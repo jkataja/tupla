@@ -20,3 +20,5 @@ typedef boost::uint16_t uint16;
 typedef boost::uint8_t uint8;
 
 } // namespace
+
+// vim:set ts=4 sts=4 sw=4 noexpandtab:

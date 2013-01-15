@@ -104,3 +104,5 @@ int main(int argc, char** argv) {
 	return (found > 0 ? EXIT_SUCCESS : EXIT_FAILURE);
 
 }
+
+// vim:set ts=4 sts=4 sw=4 noexpandtab:

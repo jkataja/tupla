@@ -151,3 +151,5 @@ BOOST_AUTO_TEST_CASE( parallel )
 	}
 }
 */
+
+// vim:set ts=4 sts=4 sw=4 noexpandtab:
