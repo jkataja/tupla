@@ -1,8 +1,10 @@
 #include "suffixsort.hpp"
 #include "sup.hpp"
-#include <cassert> // DEBUG
+
 #include <stdexcept>
 #include <iomanip>
+#include <algorithm>
+#include <cstring>
 
 using namespace sup;
 
@@ -108,7 +110,7 @@ void sup::suffixsort::build_lcp()
 	}
 	
 	lcp = new uint32[len];
-	bzero(lcp, (len * sizeof(uint32)) );
+	memset(lcp, 0, (len * sizeof(uint32)) );
 
 	// XXX spa lecture10 luentokalvoista
 	/*
@@ -180,9 +182,9 @@ void sup::suffixsort::init()
 	isa = new uint32[len];
 	sorted = new uint32[len];
 
-	bzero(sa, (len * sizeof(uint32)) );
-	bzero(isa, (len * sizeof(uint32)) );
-	bzero(sorted, (len * sizeof(uint32)) );
+	memset(sa, 0, (len * sizeof(uint32)) );
+	memset(isa, 0, (len * sizeof(uint32)) );
+	memset(sorted, 0, (len * sizeof(uint32)) );
 
 	// Count character occurences
 	for (size_t i = 0 ; i < len ; ++i) 
@@ -250,7 +252,7 @@ void sup::suffixsort::run_sequential()
 		// Combine sorted group at end
 		if (sl > 0) sorted[p] = sl;
 
-		std::cerr << SELF << ": doubling " << ffs(h) 
+		std::cerr << SELF << ": doubling " << ffsl(h) 
 				<< " with " << groups << " groups" << std::endl;
 	}
 
