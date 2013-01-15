@@ -52,11 +52,12 @@ int main(int argc, char** argv) {
 		// map input text file
 		std::string text_name( vm["input-file"].as<std::string>() );
 		long text_filesize = stat_filesize(text_name);
-		if ((text_filesize + 1) >= (UINT32_MAX >> 2)) {
-			std::cerr << SELF << ": input file too large (max 1 GiB)" 
-					<< std::endl << std::flush;
+		if ((text_filesize + sizeof(uint32)) >= std::numeric_limits<uint32>::max() ) {
+			std::cerr << SELF << ": input file too large (max 4 GiB)"
+				<< std::endl << std::flush;
 			return EXIT_FAILURE;
 		}
+
 		uint32 textlen = (uint32)text_filesize;
 		uint32 textlen_eof = textlen + 1;
 		char * text_eof = (char *)read_byte_string(text_name);
