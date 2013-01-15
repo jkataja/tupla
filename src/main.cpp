@@ -25,7 +25,7 @@ using namespace sup;
 
 int main(int argc, char** argv) {
 
-	// hardware threads available
+	// Hardware threads available
 	int hardware_jobs = boost::thread::hardware_concurrency();
 
 	try {
@@ -41,6 +41,8 @@ int main(int argc, char** argv) {
 			( "help,h", "show this help" )
 			( "lcp,l", "compute LCP array as well" )
 			( "force,f", "force overwrite of existing output" )
+			( "validate,v", "validate generated suffix array (slow)" )
+			( "output,o", "output generated suffix array to stderr" )
 			;
 
 		po::options_description hidden_opts;
@@ -59,7 +61,7 @@ int main(int argc, char** argv) {
 				options(opts).positional(p).run(), vm);
 		po::notify(vm);
 
-		// jobs range
+		// Jobs range
 		if (vm["jobs"].as<uint32>() < JobsMin 
 				|| vm["jobs"].as<uint32>() > JobsMax) {
 			std::cerr << SELF << ": concurrency level not in accepted range "
@@ -67,22 +69,22 @@ int main(int argc, char** argv) {
 			return EXIT_FAILURE;
 		}
 
-		// no input
+		// No input
 		if (!vm.count("input-file")) {
 			std::cerr << SELF << ": no input" << std::endl;
 		}
 
-		// help
+		// Help
 		if (vm.count("help") || !vm.count("input-file")) {
 			std::cerr << USAGE << visible_opts << std::endl << std::flush;
 			return EXIT_FAILURE;
 		}
 
-		// output filename
+		// Output filename
 		std::string out_name(boost::str( boost::format("%1%.%2%") 
 				% vm["input-file"].as<std::string>() % RankFileSuffix ) );
 
-		// output already found
+		// Output already found
 		if (std::ifstream( out_name.c_str() ).is_open() 
 				&& !vm.count("force")) {
 			std::cerr << SELF << ": output suffix array file '" << out_name 
@@ -92,9 +94,9 @@ int main(int argc, char** argv) {
 			return EXIT_FAILURE;
 		}
 		
-		// read input text file
+		// Read input text file
 		std::string in_name( vm["input-file"].as<std::string>() );
-		// type limits
+		// Type limits
 		long in_filesize = stat_filesize(in_name);
 		if ((in_filesize + sizeof(uint32)) >= std::numeric_limits<uint32>::max() ) {
 			std::cerr << SELF << ": input file too large (max 4 GiB)" 
@@ -111,27 +113,35 @@ int main(int argc, char** argv) {
 			return EXIT_FAILURE;
 		}
 
-		suffixsort sorter(text_eof, len_eof);
+		suffixsort sorter(text_eof, len_eof, std::cerr);
 
-		// sequential 
+		// Sequential
 		if (vm["jobs"].as<uint32>() == 1) {
 			std::cerr << SELF << ": using sequential algorithm" << std::endl;
 			sorter.run_sequential();
 		}
-		// parallel
+		// Parallel
 		else {
 			std::cerr << SELF << ": using parallel algorithm" << std::endl;
 			sorter.run_parallel(vm["jobs"].as<uint32>());
 		}
 		
-		// compute lcp array
+		// Compute LCP array from completed SA
 		if (vm.count("lcp") != 0) {
-			// TODO
-			std::cerr << SELF << ": computing of LCP array not implemented" 
-					<< std::endl << std::flush;
+			sorter.build_lcp();
 		}
 
-		// output suffix array to file
+		// Run cross-validation test
+		if (vm.count("valid") != 0) {
+			sorter.out_validate();
+		}
+
+		// Output completed suffix array
+		if (vm.count("output") != 0) {
+			sorter.out_sa();
+		}
+
+		// Output suffix array to file
 		const uint32 * const sa = sorter.get_sa();
 		write_byte_string(sa, ((len_eof) * sizeof(uint32)), out_name);
 
@@ -150,7 +160,6 @@ int main(int argc, char** argv) {
 	std::cout << std::flush;
 	std::cerr << std::flush;
 
-	//return (len >= 0 ? EXIT_SUCCESS : EXIT_FAILURE);
 	return EXIT_SUCCESS;
 
 }

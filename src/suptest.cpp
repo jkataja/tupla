@@ -59,7 +59,7 @@ void run_sequential(const std::string& in_name, uint32 * expect)
 
 	BOOST_CHECK( !has_null(text_eof, len) );
 
-	suffixsort sorter(text_eof, len_eof);
+	suffixsort sorter(text_eof, len_eof, std::cerr);
 	sorter.run_sequential();
 	const uint32 * const sa = sorter.get_sa();
 
@@ -84,7 +84,7 @@ void run_parallel(std::string& in_name, uint32 * expect,
 
 	BOOST_CHECK( !has_null(text_eof, len) );
 
-	suffixsort sorter(text_eof, len);
+	suffixsort sorter(text_eof, len, std::cerr);
 	sorter.run_parallel(jobs);
 	const uint32 * const sa = sorter.get_sa();
 

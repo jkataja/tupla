@@ -8,30 +8,30 @@
 
 using namespace sup;
 
-bool sup::suffixsort::eq_sa_isa()
+bool sup::suffixsort::is_xvalid()
 {
 	for (size_t i = 0 ; i<len ; ++i)
 		if (isa[ sa[i] ] != i) return false;
 	return true;
 }
 
-bool sup::suffixsort::out_incorrect_order(std::ostream& out)
+bool sup::suffixsort::out_incorrect_order()
 {
 	uint32 wrongorder = 0;
 	for (size_t i = 1 ; i<len ; ++i) {
 		std::string a( (text + sa[i]) );
 		std::string b( (text + sa[i-1]) );
 		if (a < b) {
-			out << (i-1) << ": "<< a << std::endl;
-			out << (i) << ": "<< b << std::endl << std::endl;
+			err << (i-1) << ": "<< a << std::endl;
+			err << (i) << ": "<< b << std::endl << std::endl;
 			++wrongorder;
 		}
 	}
-	out << SELF << ": incorrect orders " << wrongorder << std::endl;
+	err << SELF << ": incorrect orders " << wrongorder << std::endl;
 	return (wrongorder > 0);
 }
 
-uint32 sup::suffixsort::has_dupes()
+uint32 sup::suffixsort::count_dupes()
 {
 	uint32 * match = new uint32[len]();
 	uint32 dupes  = 0;
@@ -42,67 +42,60 @@ uint32 sup::suffixsort::has_dupes()
 	return dupes;
 }
 
-void sup::suffixsort::out_sa(uint32 p, size_t n, std::ostream& out)
+void sup::suffixsort::out_sa(uint32 p, size_t n)
 {
 	const uint64 v = choose_pivot(p, n);
-	out << "i\tsa[i]\torder            suffix" << std::endl;
+	err << "i\tsa[i]\torder            suffix" << std::endl;
 	for (size_t i = p ; i<p+n ; ++i)  {
 		std::string str( (text + sa[i]) );
 		str.append("$");
 		if (str.length() > 34) str.erase(34);
 		std::replace( str.begin(), str.end(), '\n', '#');
 		std::replace( str.begin(), str.end(), '\t', '#');
-		out << std::hex << i << "\t"  << sa[i] << "\t"  
+		err << std::hex << i << "\t"  << sa[i] << "\t"  
 			<< std::setw(16) << std::setfill('0') << k(i) << std::dec;
-		if (k(i) < v) out << " <";
-		if (k(i) == v) out << " =";
-		if (k(i) > v) out << " >";
-		out << " '" << str << "'" << std::endl;
+		if (k(i) < v) err << " <";
+		if (k(i) == v) err << " =";
+		if (k(i) > v) err << " >";
+		err << " '" << str << "'" << std::endl;
 	}
 }
 
-void sup::suffixsort::out_sa(std::ostream& out)
+void sup::suffixsort::out_sa()
 {
-	out << "i\tsa[i]\tsorted\torder            suffix" << std::endl;
+	err << "i\tsa[i]\tsorted\torder            suffix" << std::endl;
 	for (size_t i = 0 ; i<len ; ++i)  {
 		std::string str( (text + sa[i]) );
 		str.append("$");
 		if (str.length() > 36) str.erase(36);
 		std::replace( str.begin(), str.end(), '\n', '#');
 		std::replace( str.begin(), str.end(), '\t', '#');
-		out << std::hex << i << "\t"  << sa[i] << "\t"  
+		err << std::hex << i << "\t"  << sa[i] << "\t"  
 			<< std::dec << sorted[i] << "\t" 
 			<< std::hex << std::setw(16) << std::setfill('0') << k(i) 
 			<< std::dec << " '" << str << "'" << std::endl;
 	}
 }
 
-void sup::suffixsort::out_isa(std::ostream& out)
+bool sup::suffixsort::out_validate()
 {
-	out << "i\torder            suffix" << std::endl;
-	for (size_t i = 0 ; i < len ; ++i) {
-		std::string str( (text + i) );
-		str.append("$");
-		if (str.length() > 52) str.erase(52);
-		std::replace( str.begin(), str.end(), '\n', '#');
-		std::replace( str.begin(), str.end(), '\t', '#');
-		out << std::hex << i << "\t" 
-			<< std::setw(8) << std::setfill('0') << isa[i]
-			<< std::setw(8) << std::setfill('0') << (i+h < len ? isa[i+h] : 0)
-			<< std::dec << " '" << str << "'" << std::endl;
+	if (!finished_sa) {
+		err << SELF << ": suffix array not complete" << std::endl;
+		return false;
 	}
-}
 
-bool sup::suffixsort::validate(std::ostream& out)
-{
-	uint32 dupes = has_dupes();
-	out << SELF << ": ISA duplicates " << dupes << std::endl;
+	uint32 dupes = count_dupes();
+	err << SELF << ": ISA duplicates " << dupes << std::endl;
 
-	bool eq = eq_sa_isa();
-	if (!eq) out << SELF << ": SA and ISA are not equal" << std::endl;
+	bool eq = is_xvalid();
+	if (!eq) err << SELF << ": SA and ISA are not equal" << std::endl;
 
-	out << SELF << ": comparing neighbouring ISA index positions" << std::endl;
-	out_incorrect_order(out);
+	err << SELF << ": comparing neighbouring ISA index positions" << std::endl;
+	out_incorrect_order();
+
+	if (finished_lcp) {
+		// TODO LCP vs strncmp
+	}
 
 	return (dupes == 0 && eq);
 }
@@ -267,18 +260,14 @@ void sup::suffixsort::run_sequential()
 		if (sl > 0) sorted[p] = sl;
 
 		std::cerr << SELF << ": doubling " << ffsl(h) 
-				<< " with " << groups << " unique values ("
+				<< " with " << groups << " singleton groups ("
 				<< std::fixed << std::setprecision(1) 
 				<< ((groups/(double)(len)) * 100) 
 				<< "% complete)" << std::endl;
 	}
 
-#ifndef NDEBUG
-	validate(std::cerr);
-#endif
-
 	if (groups != len) {
-		throw std::runtime_error("could not to find unique values for all positions");
+		throw std::runtime_error("could not find singleton groups for all suffixes");
 	}
 
 	finished_sa = true;

@@ -31,10 +31,12 @@ class suffixsort {
 	uint32 * lcp; // LCP array built from completed ISA
 	uint32 * sorted; // Length of sorted group starting from index
 
-	uint64 h; // Current suffix doubling distance 
+	uint64 h; // Current suffix doubling distance
 
 	const char * const text; // Input
 	const uint32 len; // Length of input
+
+	std::ostream& err; // Error stream
 
 	bool finished_sa;
 	bool finished_lcp;
@@ -42,14 +44,11 @@ class suffixsort {
 	suffixsort(const suffixsort&);
 	suffixsort& operator=(const suffixsort&);
 
-	// Debugging
-	void out_sa(std::ostream&);
-	void out_sa(uint32, size_t, std::ostream&);
-	void out_isa(std::ostream&);
-	bool out_incorrect_order(std::ostream&);
-	uint32 has_dupes();
-	bool eq_sa_isa();
-	bool validate(std::ostream&);
+	// Debugging and testing
+	void out_sa(uint32, size_t);
+	bool out_incorrect_order();
+	uint32 count_dupes();
+	bool is_xvalid();
 	
 	// Allocate and initialize suffix array and inverse suffix array
 	// Sort first round using counting sort on first character
@@ -63,9 +62,10 @@ class suffixsort {
 	// Contains doubling pair ( ISA_h[p] , ISA_h[p+h] ) packed in long
 	inline uint64 k(const uint32 p)
 	{
-		return (sa[p] + h < len 
-				? (((uint64)isa[ sa[p] ] << 32) | isa[ sa[p] + h ] )
-				:  ((uint64)isa[ sa[p] ] << 32) ); 
+		uint32 sap = sa[p];
+		return (sap + h < len 
+				? (((uint64)isa[ sap ] << 32) | isa[ sap + h ] )
+				:  ((uint64)isa[ sap ] << 32) ); 
 	}
 
 	// Determine median value of three suffix array elements
@@ -104,7 +104,7 @@ class suffixsort {
 
 	// Swap suffix array elements at indices
 	// TODO try pre-assigned tmp variable
-	inline void swap(const uint32 a, const uint32 b)
+	inline void swap(const uint32& a, const uint32& b)
 	{
 		std::swap( sa[a], sa[b] );
 	}
@@ -136,15 +136,15 @@ class suffixsort {
 
 public:
 
-	suffixsort(const char * text, const uint32 len) 
-			: sa(0), isa(0), lcp(0), sorted(0), h(0), 
-			  text(text), len(len), 
+	suffixsort(const char * text, const uint32 len, std::ostream& err)
+			: sa(0), isa(0), lcp(0), sorted(0), h(0),
+			  text(text), len(len), err(err),
 			  finished_sa(false), finished_lcp(false) { }
 
-	~suffixsort() { 
-		delete [] sa; 
-		delete [] isa; 
-		delete [] lcp; 
+	~suffixsort() {
+		delete [] sa;
+		delete [] isa;
+		delete [] lcp;
 		delete [] sorted;
 	}
 
@@ -156,6 +156,13 @@ public:
 
 	// Compute longest common prefix data from completed suffix array
 	void build_lcp();
+
+	// Output generated SA
+	void out_sa();
+
+	// Run cross-validation on SA vs ISA and strcmp all following suffixes
+	bool out_validate();
+
 
 	// Access the class internal SA
 	const uint32 * const get_sa();
