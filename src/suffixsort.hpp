@@ -49,6 +49,7 @@ class suffixsort {
 	bool out_incorrect_order(std::ostream&);
 	uint32 has_dupes();
 	bool eq_sa_isa();
+	bool validate(std::ostream&);
 	
 	// Allocate and initialize suffix array and inverse suffix array
 	// Sort first round using counting sort on first character

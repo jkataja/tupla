@@ -93,6 +93,20 @@ void sup::suffixsort::out_isa(std::ostream& out)
 	}
 }
 
+bool sup::suffixsort::validate(std::ostream& out)
+{
+	uint32 dupes = has_dupes();
+	out << SELF << ": ISA duplicates " << dupes << std::endl;
+
+	bool eq = eq_sa_isa();
+	if (!eq) out << SELF << ": SA and ISA are not equal" << std::endl;
+
+	out << SELF << ": comparing neighbouring ISA index positions" << std::endl;
+	out_incorrect_order(out);
+
+	return (dupes == 0 && eq);
+}
+
 const uint32 * const sup::suffixsort::get_sa()
 {
 	return (finished_sa ? sa : 0);
@@ -253,21 +267,18 @@ void sup::suffixsort::run_sequential()
 		if (sl > 0) sorted[p] = sl;
 
 		std::cerr << SELF << ": doubling " << ffsl(h) 
-				<< " with " << groups << " groups" << std::endl;
+				<< " with " << groups << " unique values ("
+				<< std::fixed << std::setprecision(1) 
+				<< ((groups/(double)(len)) * 100) 
+				<< "% complete)" << std::endl;
 	}
 
 #ifndef NDEBUG
-	out_incorrect_order(std::cerr);
-
-	uint32 dupes = has_dupes();
-	std::cerr << SELF << ": duplicates " << dupes << std::endl;
-
-	if (!eq_sa_isa())
-		std::cerr << SELF << ": SA and ISA are not consistent" << std::endl;
+	validate(std::cerr);
 #endif
 
 	if (groups != len) {
-		throw std::runtime_error("unable to find unique values for all suffixes");
+		throw std::runtime_error("could not to find unique values for all positions");
 	}
 
 	finished_sa = true;
