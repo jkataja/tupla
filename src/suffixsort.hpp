@@ -1,6 +1,9 @@
 /**
  * Doubling suffix sort. 
  *
+ * Requires 12n memory compared to 8n for Larsson & Sadakane implementation, 
+ * but finished suffix array is readily accessible without inverting ISA.
+ *
  * Impelements prefix doubling as described in:
  * N. Jesper Larsson & Kunihiko Sadakane: Faster Suffix Sorting
  * LU-CS-TR:99-214 [LUNFD6/(NFCS-3140)/1{20/(1999)]
@@ -69,10 +72,13 @@ class suffixsort {
 	// Based on Bentley-McIlroy 1993: Engineering a Sort Function
 	inline uint32 med3(const uint32 a, const uint32 b, const uint32 c)
 	{
+		const uint64 ka = k(a);
+		const uint64 kb = k(b);
+		const uint64 kc = k(c);
 		// abc acb cab
 		// cba bac bca
-		return (k(a) < k(b) ? (k(b) < k(c) ? b : (k(a) < k(c) ? c : a) )
-		                    : (k(b) > k(c) ? b : (k(a) < k(c) ? a : c) ) ); 
+		return (ka < kb ? (kb < kc ? b : (ka < kc ? c : a) )
+		                : (kb > kc ? b : (ka < kc ? a : c) ) ); 
 	}
 
 	// Choose pivot value from n elements starting at p using pseudomedian
@@ -134,7 +140,12 @@ public:
 			  text(text), len(len), 
 			  finished_sa(false), finished_lcp(false) { }
 
-	~suffixsort() { delete [] sa; delete [] isa; delete [] lcp; }
+	~suffixsort() { 
+		delete [] sa; 
+		delete [] isa; 
+		delete [] lcp; 
+		delete [] sorted;
+	}
 
 	// Sequential suffix sort
 	void run_sequential();
