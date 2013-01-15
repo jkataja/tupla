@@ -190,14 +190,14 @@ void sup::suffixsort::init()
 	for (size_t i = 0 ; i < len ; ++i) 
 		++group[ (uint8)*(text + i) ];
 
-	// Starting index of each sorting group
+	// Starting index of each sorting group f..g
 	uint32 f = 0; // First index in group
 	for (size_t i = 0 ; i < Alpha ; ++i) {
 		uint32 n = group[i]; 
-		uint32 g = f + n - 1; // Last character in group
-		count[i] = f;
-		group[i] = g;
-		sorted[f] = (n == 1);
+		uint32 g = f + n - 1; // Last character in group f..g
+		count[i] = f; // Starting counting sort from f
+		group[i] = g; // Assign group sorting key to g
+		sorted[f] = (n == 1); // Sorted group length can be 1 element
 		f += n;
 	}
 	uint32 p = 0; // Starting index of sorted group
