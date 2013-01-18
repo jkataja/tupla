@@ -5,6 +5,7 @@
 #include <iomanip>
 #include <algorithm>
 #include <cstring>
+#include <boost/thread/thread.hpp>
 
 using namespace sup;
 
@@ -180,7 +181,7 @@ void sup::suffixsort::tqsort(uint32 p, size_t n)
 	if (gtn > 0) sort(pn-gtn, gtn);
 }
 
-void sup::suffixsort::init()
+void sup::suffixsort::init_sequential()
 {
 	uint32 group[Alpha] = { Z256 };
 	uint32 count[Alpha] = { Z256 };
@@ -195,16 +196,16 @@ void sup::suffixsort::init()
 
 	// Count character occurences
 	for (size_t i = 0 ; i < len ; ++i) 
-		++group[ (uint8)*(text + i) ];
+		++count[ (uint8)*(text + i) ];
 
 	// Starting index of each sorting group f..g
 	uint32 f = 0; // First index in group
 	for (size_t i = 0 ; i < Alpha ; ++i) {
-		uint32 n = group[i]; 
-		uint32 g = f + n - 1; // Last character in group f..g
+		uint32 n = count[i]; 
+		uint32 g = f + n - 1; // Last position in group f..g
 		count[i] = f; // Starting counting sort from f
-		group[i] = g; // Assign group sorting key to g
-		sorted[f] = (n == 1); // Sorted group length can be 1 element
+		group[i] = g; // Sorting group key 
+		sorted[g] = (n == 1); // Singleton group is sorted
 		f += n;
 	}
 	uint32 p = 0; // Starting index of sorted group
@@ -228,10 +229,131 @@ void sup::suffixsort::init()
 	}
 }
 
+void sup::suffixsort::tccount(uint32 ptext, uint32 n, uint32 * pcount)
+{
+	for (size_t i = ptext ; i < ptext+n ; ++i) 
+		++pcount[  (uint8)*(text + i) ];
+}
+
+void sup::suffixsort::tcsort(uint32 ptext, uint32 n, uint32 * pcount,
+		uint32 * pgroup)
+{
+	uint32 p = 0; // Starting index of sorted group
+	uint32 sl = 0; // Length of sorted groups following p
+	
+	for (size_t i = ptext ; i < ptext+n ; ++i) {
+		// Counting sort f..g
+		sa[ pcount[  (uint8)*(text + i) ]++ ] = i;
+		// Sorting key for range f..g is g
+		isa[i] = pgroup[ (uint8)*(text + i) ];
+		// Increase sorted group length
+		if (uint32 s = sorted[i]) {
+			sl += s; 
+			continue;
+		} 
+		// Combine sorted group before i
+		if (sl > 0) {
+			sorted[p] = sl; 
+			sl = 0;
+		}
+		p = i + 1;
+	}
+}
+
+void sup::suffixsort::init_parallel(const uint32 jobs)
+{
+	uint32 group[Alpha] = { Z256 };
+	uint32 count[Alpha] = { Z256 };
+
+	sa = new uint32[len];
+	isa = new uint32[len];
+	sorted = new uint32[len];
+
+	uint32 * tcount = new uint32[Alpha * jobs];
+
+	memset(sa, 0, (len * sizeof(uint32)) );
+	memset(isa, 0, (len * sizeof(uint32)) );
+	memset(sorted, 0, (len * sizeof(uint32)) );
+	memset(tcount, 0, (Alpha * jobs * sizeof(uint32)) );
+
+	//size_t tstep = std::max(4096U, (len/jobs) + 1); 
+	size_t tstep = (len/jobs) + 1; 
+
+	// Count character occurences
+	{
+		boost::thread_group tccount_group;
+		size_t ptext = 0;
+		size_t tlen = len;
+
+		for (size_t j = 0 ; j < jobs ; ++j) {
+			uint32 n = std::min(tlen, tstep);
+			uint32 * pcount = (tcount + (Alpha * j));
+
+			tccount_group.create_thread(
+					boost::bind(&sup::suffixsort::tccount, this, 
+							ptext, n, pcount) );
+
+			if (tlen <= tstep) break;
+			tlen -= tstep; ptext += tstep;
+		}
+		tccount_group.join_all();
+	}
+	// Merge
+	for (size_t i = 0 ; i < (jobs * Alpha) ; ++i) {
+		count[i & 0xFF] += tcount[i];
+	}
+
+	// Assign initial group of each character and build counting sort tables
+	uint32 f = 0; // First index in group
+	for (size_t i = 0 ; i < Alpha ; ++i) {
+		uint32 n = count[i];
+		uint32 tn = tcount[i]; // Count in thread segment
+		uint32 g = f + n - 1; // Last position in group f..g
+
+		group[i] = g; // Assign group sorting key to last index in f..g
+		sorted[g] = (n == 1); // Singleton group is sorted
+
+		// Counting sort starts from f for first and f+tn for following threads
+		tcount[i] = f; 
+		for (size_t j = 1 ; j < jobs ; ++j) {
+			uint32 tin = tcount[(j * Alpha) + i];
+			tcount[(j * Alpha) + i] = f + tn;
+			tn += tin;
+		}
+
+		f += n;
+	}
+
+	// Counting sort for each group
+	{
+		boost::thread_group tcsort_group;
+		size_t ptext = 0;
+		size_t tlen = len;
+
+		for (size_t j = 0 ; j < jobs ; ++j) {
+			uint32 n = std::min(tlen, tstep);
+			uint32 * pcount = (tcount + (Alpha * j));
+
+			tcsort_group.create_thread(
+					boost::bind(&sup::suffixsort::tcsort, this, 
+							ptext, n, pcount, group) );
+
+			if (tlen <= tstep) break;
+			tlen -= tstep; ptext += tstep;
+		}
+		tcsort_group.join_all();
+	}
+
+	// TODO merge sorted
+
+	delete [] tcount;
+}
+
+
 void sup::suffixsort::run_sequential()
 {
 	// Allocate and initialize with counting sort
-	init();
+	init_sequential();
 
 	// Doubling steps until number of sorting groups matches length
 	uint32 groups = 0;
@@ -273,8 +395,11 @@ void sup::suffixsort::run_sequential()
 	finished_sa = true;
 }
 
-void sup::suffixsort::run_parallel(uint32 jobs)
+void sup::suffixsort::run_parallel(const uint32 jobs)
 {
+	// Allocate and initialize with counting sort
+	init_parallel(jobs);
+
 	std::cerr << SELF << ": not implemented" << std::endl;
 	/*
 The next ((j + 1)-th) doubling step for prosessor i works as follows. Set 

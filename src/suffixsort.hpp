@@ -52,7 +52,12 @@ class suffixsort {
 	
 	// Allocate and initialize suffix array and inverse suffix array
 	// Sort first round using counting sort on first character
-	void init();
+	void init_sequential();
+
+	// Parallel initialization
+	void tccount(uint32, uint32, uint32 *);
+	void tcsort(uint32, uint32, uint32 *, uint32 *);
+	void init_parallel(const uint32);
 
 	// Sort range using ternary split quick sort
 	// Based on Bentley-McIlroy 1993: Engineering a Sort Function
@@ -152,7 +157,7 @@ public:
 	void run_sequential();
 
 	// Parallel suffix sort
-	void run_parallel(uint32);
+	void run_parallel(const uint32);
 
 	// Compute longest common prefix data from completed suffix array
 	void build_lcp();
