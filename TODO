@@ -2,14 +2,15 @@ Known problems:
 
 1.
 
-When compiled with gcc 4.6 from ports, static boost libraries compiled
-with apple gcc causes errors:
+When compiled with g++-mp-4.6 from ports, linking against static
+Boost libraries compiled with llvm results in the following error:
 
 sup(38484) malloc: *** error for object 0x7fff7f191860: pointer being freed was not allocated
 *** set a breakpoint in malloc_error_break to debug
 Abort trap: 6
 
 
-See:
-http://stackoverflow.com/questions/4697859/mac-os-x-and-static-boost-libs-stdstring-fail
+Workaround:
+Build Boost static libraries with gcc-mp-4.6
+http://lists.macosforge.org/pipermail/macports-users/2011-November/026364.html
 
