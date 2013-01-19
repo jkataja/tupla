@@ -38,7 +38,7 @@ private:
 
 protected:
 	virtual void init();
-	virtual uint32 doubling();
+	virtual void doubling();
 
 public:
 

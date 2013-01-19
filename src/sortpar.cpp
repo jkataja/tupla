@@ -175,7 +175,7 @@ void sup::sortpar::init()
 	delete [] tcount;
 }
 
-uint32 sup::sortpar::doubling()
+void sup::sortpar::doubling()
 {
 	err << SELF << ": not implemented" << std::endl;
 	/*
@@ -198,7 +198,6 @@ be achieved using other models of computation. When assuming T is
 sampled from uniform distribution, we have N ≤ n⌈p/σ⌉ (for each
 character there is the same amount of pivots).
 	*/
-	return 0;
 }
 
 // vim:set ts=4 sts=4 sw=4 noexpandtab:

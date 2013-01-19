@@ -12,8 +12,8 @@
 using namespace sup;
 
 suffixsort::suffixsort(const char * text, const uint32 len, std::ostream& err)
-	: sa(0), isa(0), lcp(0), sorted(0), h(0), text(text), len(len), err(err), 
-	  finished_sa(false), finished_lcp(false)
+	: sa(0), isa(0), lcp(0), sorted(0), h(0), text(text), len(len), groups(0),
+	  err(err), finished_sa(false), finished_lcp(false)
 {
 }
 
@@ -45,9 +45,8 @@ void sup::suffixsort::run()
 	init();
 
 	// Doubling steps until number of sorting groups matches length
-	uint32 groups = 0;
 	for (h = 1 ; (groups < len && h < len) ; h <<= 1) {
-		groups = doubling();
+		doubling();
 		std::cerr << SELF << ": doubling " << ffsl(h) 
 				<< " with " << groups << " singleton groups ("
 				<< std::fixed << std::setprecision(1) 
@@ -92,11 +91,11 @@ void sup::suffixsort::tqsort(uint32 p, size_t n)
 	a = b = p;
 	c = d = p + (n-1);
 	for (;;) {
-		while (b <= c && k(b) <= v) {
+		while (b <= c && vlte(b,v)) {
 			if (k(b) == v) swap(a++, b); 
 			++b;
 		}
-		while (c >= b && k(c) >= v) {
+		while (c >= b && vgte(c,v)) {
 			if (k(c) == v) swap(c, d--);
 			--c;
 		}

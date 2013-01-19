@@ -32,7 +32,7 @@ private:
 
 protected:
 	virtual void init();
-	virtual uint32 doubling();
+	virtual void doubling();
 
 public:
 	sortseq(const char *, const uint32, std::ostream&);

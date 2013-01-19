@@ -69,7 +69,7 @@ void sup::sortseq::init()
 		uint32 g = f + n - 1; // Last position in group f..g
 		count[i] = f; // Starting counting sort from f
 		group[i] = g; // Sorting group key 
-		sorted[f] = (n == 1); // Singleton group is sorted
+		groups += sorted[f] = (n == 1); // Singleton group is sorted
 		f += n;
 	}
 	uint32 p = 0; // Starting index of sorted group
@@ -93,31 +93,28 @@ void sup::sortseq::init()
 	}
 }
 
-uint32 sup::sortseq::doubling()
+void sup::sortseq::doubling()
 {
 	uint32 p = 0; // Starting index of sorted group
 	uint32 sl = 0; // Sorted groups length following start
-	uint32 groups = 0;
 	for (size_t i = 0 ; i < len ; ) {
 		// Skip sorted group
 		if (uint32 s = sorted[i]) {
-			i += s; sl += s; groups += s;
+			i += s; sl += s;
+			continue;
 		} 
-		else {
-			// Combine sorted group before i
-			if (sl > 0) {
-				sorted[p] = sl; 
-				sl = 0;
-			}
-			// Sort unsorted group i..g
-			uint32 g = isa[ sa[i] ] + 1;
-			sort(i, g-i);
-			p = i = g;
+		// Combine sorted group before i
+		if (sl > 0) {
+			sorted[p] = sl; 
+			sl = 0;
 		}
+		// Sort unsorted group i..g
+		uint32 g = isa[ sa[i] ] + 1;
+		sort(i, g-i);
+		p = i = g;
 	}
 	// Combine sorted group at end
 	if (sl > 0) sorted[p] = sl;
-	return groups;
 }
 
 // vim:set ts=4 sts=4 sw=4 noexpandtab:

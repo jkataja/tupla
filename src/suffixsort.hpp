@@ -40,6 +40,7 @@ protected:
 
 	const char * const text; // Input
 	const uint32 len; // Length of input
+	uint32 groups; // Singleton groups
 
 	std::ostream& err; // Error stream
 
@@ -54,7 +55,7 @@ protected:
 	virtual void init() = 0;
 
 	// Doubling step
-	virtual uint32 doubling() = 0;
+	virtual void doubling() = 0;
 
 	// Sort range using ternary split quick sort
 	// Based on Bentley-McIlroy 1993: Engineering a Sort Function
@@ -168,8 +169,8 @@ protected:
 	// Group number is last index with value to keep sort keys decreasing
 	inline void assign(uint32 p, size_t n)
 	{
-		uint32 g = p + n - 1; 
-		if (n == 1) sorted[p] = 1;
+		uint32 g = p + n - 1;
+		if (n == 1) { ++groups; sorted[p] = 1; }
 		for (size_t i = p ; i < p+n ; ++i) 
 			isa[ sa[i] ] = g;
 	}
