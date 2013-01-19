@@ -44,8 +44,6 @@ void sup::suffixsort::run()
 	// Allocate and initialize with counting sort
 	init();
 
-	out_sa();
-
 	// Doubling steps until number of sorting groups matches length
 	uint32 groups = 0;
 	for (h = 1 ; (groups < len && h < len) ; h <<= 1) {
