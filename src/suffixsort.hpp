@@ -26,6 +26,11 @@ namespace sup {
 
 class suffixsort {
 
+private:
+	suffixsort(const suffixsort&);
+	suffixsort& operator=(const suffixsort&);
+
+protected:
 	uint32 * sa;  // Suffixes sorted in h-order
 	uint32 * isa; // Sorting keys for suffix starting from index
 	uint32 * lcp; // LCP array built from completed ISA
@@ -41,27 +46,57 @@ class suffixsort {
 	bool finished_sa;
 	bool finished_lcp;
 
-	suffixsort(const suffixsort&);
-	suffixsort& operator=(const suffixsort&);
+	// Constructor called from instance()
+	suffixsort(const char * text, const uint32 len, std::ostream& err);
 
+	// Allocate and initialize suffix array and inverse suffix array
+	// Sort first round using counting sort on first character
+	virtual void init() = 0;
+
+	// Doubling step
+	virtual uint32 doubling() = 0;
+
+	// Sort range using ternary split quick sort
+	// Based on Bentley-McIlroy 1993: Engineering a Sort Function
+	void tqsort(uint32, size_t);
+	
 	// Debugging and testing
 	void out_sa(uint32, size_t);
 	bool out_incorrect_order();
 	uint32 count_dupes();
 	bool is_xvalid();
+
+	// Compare index a in suffix array and value v 
+	inline uint64 vlt(const uint32 a, const uint64 v)
+	{ return ((isa[ sa[a] ] < (v >> 32)) || k(a) < v); }
 	
-	// Allocate and initialize suffix array and inverse suffix array
-	// Sort first round using counting sort on first character
-	void init_sequential();
+	// Compare index a in suffix array and value v 
+	inline uint64 vgt(const uint32 a, const uint64 v)
+	{ return ((isa[ sa[a] ] > (v >> 32)) || k(a) > v); }
+	
+	// Compare index a in suffix array and value v 
+	inline uint64 vlte(const uint32 a, const uint64 v)
+	{ return ((isa[ sa[a] ] <= (v >> 32)) || k(a) <= v); }
+	
+	// Compare index a in suffix array and value v 
+	inline uint64 vgte(const uint32 a, const uint64 v)
+	{ return ((isa[ sa[a] ] >= (v >> 32)) || k(a) >= v); }
+	
+	// Compare indexes a and b in suffix array
+	inline uint64 lt(const uint32 a, const uint32 b)
+	{ return ((isa[ sa[a] ] < isa[ sa[b] ] ) || k(a) < k(b)); }
+	
+	// Compare indexes a and b in suffix array
+	inline uint64 gt(const uint32 a, const uint32 b)
+	{ return ((isa[ sa[a] ] > isa[ sa[b] ] ) || k(a) > k(b)); }
 
-	// Parallel initialization
-	void tccount(uint32, uint32, uint32 *);
-	void tcsort(uint32, uint32, uint32 *, uint32 *);
-	void init_parallel(const uint32);
+	// Compare indexes a and b in suffix array
+	inline uint64 lte(const uint32 a, const uint32 b)
+	{ return ((isa[ sa[a] ] <= isa[ sa[b] ]) || k(a) <= k(b)); }
 
-	// Sort range using ternary split quick sort
-	// Based on Bentley-McIlroy 1993: Engineering a Sort Function
-	void tqsort(uint32, size_t);
+	// Compare indexes a and b in suffix array
+	inline uint64 gte(const uint32 a, const uint32 b)
+	{ return ((isa[ sa[a] ] >= isa[ sa[b] ] ) || k(a) >= k(b)); }
 
 	// Comparison key for index p in suffix array
 	// Contains doubling pair ( ISA_h[p] , ISA_h[p+h] ) packed in long
@@ -141,39 +176,27 @@ class suffixsort {
 
 public:
 
-	suffixsort(const char * text, const uint32 len, std::ostream& err)
-			: sa(0), isa(0), lcp(0), sorted(0), h(0),
-			  text(text), len(len), err(err),
-			  finished_sa(false), finished_lcp(false) { }
+	static suffixsort * instance(const char *, const uint32, const uint32, 
+			std::ostream&);
+	~suffixsort();
 
-	~suffixsort() {
-		delete [] sa;
-		delete [] isa;
-		delete [] lcp;
-		delete [] sorted;
-	}
-
-	// Sequential suffix sort
-	void run_sequential();
-
-	// Parallel suffix sort
-	void run_parallel(const uint32);
+	// Run suffix sort
+	virtual void run();
 
 	// Compute longest common prefix data from completed suffix array
-	void build_lcp();
+	virtual void build_lcp() = 0;
 
 	// Output generated SA
-	void out_sa();
+	virtual void out_sa();
 
 	// Run cross-validation on SA vs ISA and strcmp all following suffixes
-	bool out_validate();
-
+	virtual bool out_validate();
 
 	// Access the class internal SA
-	const uint32 * const get_sa();
+	virtual const uint32 * const get_sa();
 
 	// Access the class internal LCP array
-	const uint32 * const get_lcp();
+	virtual const uint32 * const get_lcp();
 
 };
 

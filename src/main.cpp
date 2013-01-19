@@ -7,6 +7,7 @@
 #include <iostream>
 #include <fstream>
 #include <stdexcept>
+#include <memory>
 #include <boost/program_options.hpp>
 #include <boost/format.hpp>
 #include <boost/iostreams/device/mapped_file.hpp>
@@ -107,42 +108,28 @@ int main(int argc, char** argv) {
 		uint32 len_eof = len + 1;
 		char * text_eof = (char *)read_byte_string(in_name);
 
-		if (has_null(text_eof, len)) {
-			std::cerr << SELF << ": input text contains null"
-					<< std::endl << std::flush;
-			return EXIT_FAILURE;
-		}
+		std::unique_ptr<suffixsort> sorter( suffixsort::instance( text_eof,
+				len_eof, vm["jobs"].as<uint32>(), std::cerr) );
 
-		suffixsort sorter(text_eof, len_eof, std::cerr);
+		sorter->run();
 
-		// Sequential
-		if (vm["jobs"].as<uint32>() == 1) {
-			std::cerr << SELF << ": using sequential algorithm" << std::endl;
-			sorter.run_sequential();
-		}
-		// Parallel
-		else {
-			std::cerr << SELF << ": using parallel algorithm" << std::endl;
-			sorter.run_parallel(vm["jobs"].as<uint32>());
-		}
-		
 		// Compute LCP array from completed SA
 		if (vm.count("lcp") != 0) {
-			sorter.build_lcp();
+			sorter->build_lcp();
 		}
 
 		// Run cross-validation test
 		if (vm.count("valid") != 0) {
-			sorter.out_validate();
+			sorter->out_validate();
 		}
 
 		// Output completed suffix array
 		if (vm.count("output") != 0) {
-			sorter.out_sa();
+			sorter->out_sa();
 		}
 
 		// Output suffix array to file
-		const uint32 * const sa = sorter.get_sa();
+		const uint32 * const sa = sorter->get_sa();
 		write_byte_string(sa, ((len_eof) * sizeof(uint32)), out_name);
 
 		delete [] text_eof;

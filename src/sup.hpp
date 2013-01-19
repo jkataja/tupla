@@ -33,6 +33,9 @@ static const uint32 Alpha = 256;
 static const uint32 JobsMin = 1;
 static const uint32 JobsMax = 64;
 
+// Minimum input size for staring a new thread
+static const uint32 JobMinInput = 32768U;
+
 // Get file size
 long stat_filesize(const std::string&);
 

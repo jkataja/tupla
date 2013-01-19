@@ -59,9 +59,12 @@ void run_sequential(const std::string& in_name, uint32 * expect)
 
 	BOOST_CHECK( !has_null(text_eof, len) );
 
-	suffixsort sorter(text_eof, len_eof, std::cerr);
-	sorter.run_sequential();
-	const uint32 * const sa = sorter.get_sa();
+	std::unique_ptr<suffixsort> sorter( suffixsort::instance( text_eof,
+			len_eof, 1, std::cerr) );
+
+	sorter->run();
+
+	const uint32 * const sa = sorter->get_sa();
 
 	BOOST_CHECK( has_sa_range(sa, len_eof) );
 	BOOST_CHECK( has_sa_unique(sa, len_eof) );
@@ -84,9 +87,12 @@ void run_parallel(std::string& in_name, uint32 * expect,
 
 	BOOST_CHECK( !has_null(text_eof, len) );
 
-	suffixsort sorter(text_eof, len, std::cerr);
-	sorter.run_parallel(jobs);
-	const uint32 * const sa = sorter.get_sa();
+	std::unique_ptr<suffixsort> sorter( suffixsort::instance( text_eof,
+			len_eof, jobs, std::cerr) );
+
+	sorter->run();
+
+	const uint32 * const sa = sorter->get_sa();
 
 	BOOST_CHECK( has_sa_range(sa, len_eof) );
 	BOOST_CHECK( has_sa_unique(sa, len_eof) );
@@ -106,7 +112,7 @@ BOOST_AUTO_TEST_CASE( read_text )
 	}
 	// test/banana
 	{
-		char * text = (char *)read_byte_string("test/banana");
+		char * text = (char *)read_byte_string("data/trivial/banana");
 		BOOST_CHECK( strcmp("banana", text) == 0 );
 		delete [] text;
 	}
