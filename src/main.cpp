@@ -119,7 +119,7 @@ int main(int argc, char** argv) {
 		}
 
 		// Run cross-validation test
-		if (vm.count("valid") != 0) {
+		if (vm.count("validate") != 0) {
 			sorter->out_validate();
 		}
 

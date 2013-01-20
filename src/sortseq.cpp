@@ -110,7 +110,7 @@ void sup::sortseq::doubling()
 		}
 		// Sort unsorted group i..g
 		uint32 g = isa[ sa[i] ] + 1;
-		sort(i, g-i);
+		tqsort(i, g-i);
 		p = i = g;
 	}
 	// Combine sorted group at end

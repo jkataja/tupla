@@ -73,29 +73,61 @@ const uint32 * const sup::suffixsort::get_lcp()
 
 void sup::suffixsort::tqsort(uint32 p, size_t n)
 {
-/*
-	// Insertion sort on smallest arrays
+	uint32 a,b,c,d;
+	uint32 pn = p + n;
+
+	// Sort small tables with bingo sort 
+	// Supposedly more efficient than selection sort with duplicate values
+	// Adapted from:
+	// @see http://en.wikipedia.org/wiki/Selection_sort#Variants
 	if (n < 7) {
-		for (uint32 i = p + 1 ; i < p + n ; ++i)
-			for (uint32 j = i ; j > p && k(j-1) > k(j) ; --j)
-				swap(j, j-1);
-		// TODO assign
+		a = pn-1;
+		uint32 eqn = 0;
+
+		// Find the highest value
+		uint64 v = k(a);
+		for (uint32 i = a ; i >= p ; --i)
+			if (k(i) > v) v = k(i);
+		while ((a > p) && (k(a) == v)) { --a; ++eqn; }
+
+		// Move every item with highest values to end of list
+		// One pass for each value in list
+		while (a > p) {
+			uint64 f = v;
+			v = k(a);
+			for (uint32 i = a - 1 ; i >= p ; --i) {
+				uint64 ki = k(i);
+				if (ki == f) { swap(i, a--); ++eqn; }
+				else if (ki > v) v = ki;
+			}
+			// Assign items sharing highest value to new group
+			assign(a + 1, eqn);
+			eqn = 0;
+			while ((a > p) && (k(a) == v)) { --a; ++eqn; }
+		}
+		// First index also contained highest value
+		if (k(p) == v) {
+			assign(p, eqn + 1);
+		}
+		// Split-end
+		else {
+			assign(a + 1, eqn);
+			assign(p, 1);
+		}
 		return;
 	}
-*/
 	
 	const uint64 v = choose_pivot(p, n);
 
 	// Partition
-	uint32 a,b,c,d;
 	a = b = p;
 	c = d = p + (n-1);
 	for (;;) {
-		while (b <= c && vlte(b,v)) {
+		while (b <= c && k(b) <= v) {
 			if (k(b) == v) swap(a++, b); 
 			++b;
 		}
-		while (c >= b && vgte(c,v)) {
+		while (c >= b && k(c) >= v) {
 			if (k(c) == v) swap(c, d--);
 			--c;
 		}
@@ -104,7 +136,6 @@ void sup::suffixsort::tqsort(uint32 p, size_t n)
 	}
 
 	// Move split-end group to middle
-	uint32 pn = p + n;
 	const uint32 s = std::min(a-p, b-a ); vecswap(p, b-s, s);
 	const uint32 t = std::min(d-c, pn-1-d); vecswap(b, pn-t, t);
 
@@ -112,9 +143,9 @@ void sup::suffixsort::tqsort(uint32 p, size_t n)
 	const uint32 gtn = d-c;
 	const uint32 eqn = n - ltn - gtn;
 
-	if (ltn > 0) sort(p, ltn);
+	if (ltn > 0) tqsort(p, ltn);
 	assign(p+ltn, eqn); 
-	if (gtn > 0) sort(pn-gtn, gtn);
+	if (gtn > 0) tqsort(pn-gtn, gtn);
 }
 
 bool sup::suffixsort::is_xvalid()
@@ -128,15 +159,22 @@ bool sup::suffixsort::out_incorrect_order()
 {
 	uint32 wrongorder = 0;
 	for (size_t i = 1 ; i<len ; ++i) {
-		std::string a( (text + sa[i]) );
-		std::string b( (text + sa[i-1]) );
-		if (a < b) {
-			err << (i-1) << ": "<< a << std::endl;
-			err << (i) << ": "<< b << std::endl << std::endl;
+		if (strcmp((text+sa[i]), (text + sa[i-1])) < 0) {
+			std::string a( (text + sa[i]) );
+			std::string b( (text + sa[i-1]) );
+			a.append("$"); b.append("$");
+			if (a.length() > 34) a.erase(34);
+			if (b.length() > 34) b.erase(34);
+			std::replace( a.begin(), a.end(), '\n', '#');
+			std::replace( a.begin(), a.end(), '\t', '#');
+			std::replace( b.begin(), b.end(), '\n', '#');
+			std::replace( b.begin(), b.end(), '\t', '#');
+			err << SELF << ": line " << (i-1) << ": "<< a << std::endl;
+			err << SELF << ": line " << (i) << ": "<< b << std::endl;
 			++wrongorder;
 		}
 	}
-	err << SELF << ": incorrect orders " << wrongorder << std::endl;
+	err << SELF << ": found " << wrongorder << " pairs of suffixes in incorrect lexicographical order" << std::endl;
 	return (wrongorder > 0);
 }
 
@@ -194,12 +232,13 @@ bool sup::suffixsort::out_validate()
 	}
 
 	uint32 dupes = count_dupes();
-	err << SELF << ": ISA duplicates " << dupes << std::endl;
+	err << SELF << ": found " << dupes << " duplicates in ISA" << std::endl;
 
 	bool eq = is_xvalid();
-	if (!eq) err << SELF << ": SA and ISA are not equal" << std::endl;
+	if (!eq) err << SELF << ": final SA and ISA __DO_NOT__ match" << std::endl;
+	else err << SELF << ": final SA and ISA match" << std::endl;
 
-	err << SELF << ": comparing neighbouring ISA index positions" << std::endl;
+	err << SELF << ": strcmp'ing neighboring suffixes in ISA" << std::endl;
 	out_incorrect_order();
 
 	if (finished_lcp) {

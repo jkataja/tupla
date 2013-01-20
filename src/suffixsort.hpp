@@ -67,38 +67,6 @@ protected:
 	uint32 count_dupes();
 	bool is_xvalid();
 
-	// Compare index a in suffix array and value v 
-	inline uint64 vlt(const uint32 a, const uint64 v)
-	{ return ((isa[ sa[a] ] < (v >> 32)) || k(a) < v); }
-	
-	// Compare index a in suffix array and value v 
-	inline uint64 vgt(const uint32 a, const uint64 v)
-	{ return ((isa[ sa[a] ] > (v >> 32)) || k(a) > v); }
-	
-	// Compare index a in suffix array and value v 
-	inline uint64 vlte(const uint32 a, const uint64 v)
-	{ return ((isa[ sa[a] ] <= (v >> 32)) || k(a) <= v); }
-	
-	// Compare index a in suffix array and value v 
-	inline uint64 vgte(const uint32 a, const uint64 v)
-	{ return ((isa[ sa[a] ] >= (v >> 32)) || k(a) >= v); }
-	
-	// Compare indexes a and b in suffix array
-	inline uint64 lt(const uint32 a, const uint32 b)
-	{ return ((isa[ sa[a] ] < isa[ sa[b] ] ) || k(a) < k(b)); }
-	
-	// Compare indexes a and b in suffix array
-	inline uint64 gt(const uint32 a, const uint32 b)
-	{ return ((isa[ sa[a] ] > isa[ sa[b] ] ) || k(a) > k(b)); }
-
-	// Compare indexes a and b in suffix array
-	inline uint64 lte(const uint32 a, const uint32 b)
-	{ return ((isa[ sa[a] ] <= isa[ sa[b] ]) || k(a) <= k(b)); }
-
-	// Compare indexes a and b in suffix array
-	inline uint64 gte(const uint32 a, const uint32 b)
-	{ return ((isa[ sa[a] ] >= isa[ sa[b] ] ) || k(a) >= k(b)); }
-
 	// Comparison key for index p in suffix array
 	// Contains doubling pair ( ISA_h[p] , ISA_h[p+h] ) packed in long
 	inline uint64 k(const uint32 p)
@@ -154,15 +122,6 @@ protected:
 	inline void vecswap(uint32 a, uint32 b, size_t n)
 	{
 		for ( ; n ; --n) swap(a++, b++);
-	}
-
-	// Sort sorting group starting from p
-	// Reduce function calls to tqsort
-	// TODO inline insertion sort for small arrays
-	inline void sort(uint32 p, size_t n)
-	{
-		if (n == 0) return;
-		else tqsort(p, n);
 	}
 
 	// Renumber group at p..g with matching sorting key as g 
