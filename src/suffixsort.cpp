@@ -71,83 +71,6 @@ const uint32 * const sup::suffixsort::get_lcp()
 	return (finished_lcp ? lcp : 0);
 }
 
-void sup::suffixsort::tqsort(uint32 p, size_t n)
-{
-	uint32 a,b,c,d;
-	uint32 pn = p + n;
-
-	// Sort small tables with bingo sort 
-	// Supposedly more efficient than selection sort with duplicate values
-	// Adapted from:
-	// @see http://en.wikipedia.org/wiki/Selection_sort#Variants
-	if (n < 7) {
-		a = pn-1;
-		uint32 eqn = 0;
-
-		// Find the highest value
-		uint64 v = k(a);
-		for (uint32 i = a ; i >= p ; --i)
-			if (k(i) > v) v = k(i);
-		while ((a > p) && (k(a) == v)) { --a; ++eqn; }
-
-		// Move every item with highest values to end of list
-		// One pass for each value in list
-		while (a > p) {
-			uint64 f = v;
-			v = k(a);
-			for (uint32 i = a - 1 ; i >= p ; --i) {
-				uint64 ki = k(i);
-				if (ki == f) { swap(i, a--); ++eqn; }
-				else if (ki > v) v = ki;
-			}
-			// Assign items sharing highest value to new group
-			assign(a + 1, eqn);
-			eqn = 0;
-			while ((a > p) && (k(a) == v)) { --a; ++eqn; }
-		}
-		// First index also contained highest value
-		if (k(p) == v) {
-			assign(p, eqn + 1);
-		}
-		// Split-end
-		else {
-			assign(a + 1, eqn);
-			assign(p, 1);
-		}
-		return;
-	}
-	
-	const uint64 v = choose_pivot(p, n);
-
-	// Partition
-	a = b = p;
-	c = d = p + (n-1);
-	for (;;) {
-		while (b <= c && k(b) <= v) {
-			if (k(b) == v) swap(a++, b); 
-			++b;
-		}
-		while (c >= b && k(c) >= v) {
-			if (k(c) == v) swap(c, d--);
-			--c;
-		}
-		if (b > c) break;
-		swap(b++, c--);
-	}
-
-	// Move split-end group to middle
-	const uint32 s = std::min(a-p, b-a ); vecswap(p, b-s, s);
-	const uint32 t = std::min(d-c, pn-1-d); vecswap(b, pn-t, t);
-
-	const uint32 ltn = b-a;
-	const uint32 gtn = d-c;
-	const uint32 eqn = n - ltn - gtn;
-
-	if (ltn > 0) tqsort(p, ltn);
-	assign(p+ltn, eqn); 
-	if (gtn > 0) tqsort(pn-gtn, gtn);
-}
-
 bool sup::suffixsort::is_xvalid()
 {
 	for (size_t i = 0 ; i<len ; ++i)
@@ -191,19 +114,15 @@ uint32 sup::suffixsort::count_dupes()
 
 void sup::suffixsort::out_sa(uint32 p, size_t n)
 {
-	const uint64 v = choose_pivot(p, n);
 	err << "i\tsa[i]\torder            suffix" << std::endl;
 	for (size_t i = p ; i<p+n ; ++i)  {
 		std::string str( (text + sa[i]) );
 		str.append("$");
-		if (str.length() > 34) str.erase(34);
+		if (str.length() > 36) str.erase(36);
 		std::replace( str.begin(), str.end(), '\n', '#');
 		std::replace( str.begin(), str.end(), '\t', '#');
 		err << std::hex << i << "\t"  << sa[i] << "\t"  
 			<< std::setw(16) << std::setfill('0') << k(i) << std::dec;
-		if (k(i) < v) err << " <";
-		if (k(i) == v) err << " =";
-		if (k(i) > v) err << " >";
 		err << " '" << str << "'" << std::endl;
 	}
 }
