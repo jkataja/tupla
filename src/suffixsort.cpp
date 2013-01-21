@@ -61,6 +61,88 @@ void sup::suffixsort::run()
 	finished_sa = true;
 }
 
+
+void sup::suffixsort::tqsort(uint32 p, size_t n)
+{
+	uint32 a,b,c,d;
+	uint32 pn = p + n;
+
+	// Sort small tables with bingo sort 
+	// Supposedly more efficient than selection sort with duplicate values
+	// Adapted from:
+	// @see http://en.wikipedia.org/wiki/Selection_sort#Variants
+	if (n < 7) {
+		a = pn-1;
+		uint32 eqn = 0;
+
+		// Find the highest value
+		uint64 v = k(a);
+		for (uint32 i = a ; i >= p ; --i)
+			if (k(i) > v) v = k(i);
+		while ((a > p) && (k(a) == v)) { --a; ++eqn; }
+
+		// Move every item with highest values to end of list
+		// One pass for each value in list
+		while (a > p) {
+			uint64 f = v;
+			v = k(a);
+			for (uint32 i = a - 1 ; i >= p ; --i) {
+				uint64 ki = k(i);
+				if (ki == f) { swap(i, a--); ++eqn; }
+				else if (ki > v) v = ki;
+			}
+			// Assign items sharing highest value to new group
+			assign(a + 1, eqn);
+			eqn = 0;
+			while ((a > p) && (k(a) == v)) { --a; ++eqn; }
+		}
+		// First index also contained highest value
+		if (k(p) == v) {
+			assign(p, eqn + 1);
+		}
+		else {
+			assign(a + 1, eqn);
+			assign(p, 1);
+		}
+		return;
+	}
+	
+	const uint64 v = choose_pivot(p, n);
+
+	// Partition
+	a = b = p;
+	c = d = p + (n-1);
+
+	// Assume on range i=f..g value ISA_h[ SA_h[i] ] is equal
+	// Only use the doubling part  ISA_h[ SA_h[i] + h ] as comparison key
+	uint32 sv = (v & 0xFFFFFFFF);
+	uint32 tv;
+	for (;;) {
+		while (b <= c && (tv = isa[ sa[b] + h ]) <= sv) {
+			if (tv == sv) swap(a++, b); 
+			++b;
+		}
+		while (c >= b && (tv = isa[ sa[c] + h ]) >= sv) {
+			if (tv == sv) swap(c, d--);
+			--c;
+		}
+		if (b > c) break;
+		swap(b++, c--);
+	}
+
+	// Move split-end group to middle
+	const uint32 s = std::min(a-p, b-a ); vecswap(p, b-s, s);
+	const uint32 t = std::min(d-c, pn-1-d); vecswap(b, pn-t, t);
+
+	const uint32 ltn = b-a;
+	const uint32 gtn = d-c;
+	const uint32 eqn = n - ltn - gtn;
+
+	if (ltn > 0) tqsort(p, ltn);
+	assign(p+ltn, eqn); 
+	if (gtn > 0) tqsort(pn-gtn, gtn);
+}
+
 const uint32 * const sup::suffixsort::get_sa()
 {
 	return (finished_sa ? sa : 0);
@@ -78,9 +160,9 @@ bool sup::suffixsort::is_xvalid()
 	return true;
 }
 
-bool sup::suffixsort::out_incorrect_order()
+bool sup::suffixsort::out_descending()
 {
-	uint32 wrongorder = 0;
+	uint32 descending = 0;
 	for (size_t i = 1 ; i<len ; ++i) {
 		if (strcmp((text+sa[i]), (text + sa[i-1])) < 0) {
 			std::string a( (text + sa[i]) );
@@ -94,11 +176,11 @@ bool sup::suffixsort::out_incorrect_order()
 			std::replace( b.begin(), b.end(), '\t', '#');
 			err << SELF << ": line " << (i-1) << ": "<< a << std::endl;
 			err << SELF << ": line " << (i) << ": "<< b << std::endl;
-			++wrongorder;
+			++descending;
 		}
 	}
-	err << SELF << ": found " << wrongorder << " pairs of suffixes in incorrect lexicographical order" << std::endl;
-	return (wrongorder > 0);
+	err << SELF << ": found " << descending << " in descending order" << std::endl;
+	return (descending > 0);
 }
 
 uint32 sup::suffixsort::count_dupes()
@@ -157,8 +239,8 @@ bool sup::suffixsort::out_validate()
 	if (!eq) err << SELF << ": final SA and ISA __DO_NOT__ match" << std::endl;
 	else err << SELF << ": final SA and ISA match" << std::endl;
 
-	err << SELF << ": strcmp'ing neighboring suffixes in ISA" << std::endl;
-	out_incorrect_order();
+	err << SELF << ": checking if ISA is in ascending order" << std::endl;
+	out_descending();
 
 	if (finished_lcp) {
 		// TODO LCP vs strncmp

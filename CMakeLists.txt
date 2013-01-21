@@ -9,7 +9,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -ffast-math -funroll-loops -fprefetch-loop-arrays")
 
 # mac ports
-include_directories(/opt/local/include)
+include_directories(/opt/local/include ${CMAKE_SOURCE_DIR}/dependencies/threadpool/include)
 link_directories(/opt/local/lib)
 
 find_package(Boost COMPONENTS system program_options iostreams thread REQUIRED)

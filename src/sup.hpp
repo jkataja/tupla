@@ -33,8 +33,9 @@ static const uint32 Alpha = 256;
 static const uint32 JobsMin = 1;
 static const uint32 JobsMax = 64;
 
-// Minimum input size for staring a new thread
-static const uint32 JobMinInput = 32768U;
+// Minimum input size for assigning sort to a new thread
+static const uint32 GrainSize = (1 << 8);
+static const uint32 BucketSize = (1 << 22);
 
 // Get file size
 long stat_filesize(const std::string&);

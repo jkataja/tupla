@@ -19,26 +19,74 @@
 
 #include <iostream>
 #include <boost/cstdint.hpp>
+#include <boost/signals2/mutex.hpp>
+#include <boost/threadpool.hpp>
+#include <boost/thread/thread.hpp>
 
 #include "numdefs.hpp"
 #include "suffixsort.hpp"
+#include "tqsort_task.hpp"
 
 namespace sup {
 
 class sortpar : public suffixsort {
+
 private:
-	uint32 jobs;
 
 	sortpar(const sortpar&);
 	sortpar& operator=(const sortpar&);
 
+	boost::signals2::mutex assign_lock;
+
+	boost::threadpool::pool tp;
+
+	uint32 * isa_assign; // Doubling assignments
+
+	const uint32 jobs;
+
 	// Parallel initialization subroutines
 	void tccount(uint32, uint32, uint32 *);
 	void tcsort(uint32, uint32, uint32 *, uint32 *);
+	void sort_range(uint32 p, size_t n);
+
+	void tqsort(uint32 p, size_t n);
+	
+
+	inline void sort_switch(uint32 p, size_t n) 
+	{
+		// Inline
+		if (n < GrainSize) {
+			tqsort(p, n);
+		}
+		// New task for thread
+		// TODO assign on same thread
+		else {
+			boost::shared_ptr<tqsort_task> job(new tqsort_task(this, p, n));
+			boost::threadpool::schedule(tp, 
+					boost::bind(&tqsort_task::run, job));
+		}
+	}
+
+	// Renumber group at p..g with matching sorting key as g 
+	// Group number is last index with value to keep sort keys decreasing
+	inline void assign(uint32 p, size_t n)
+	{
+		uint32 g = p + n - 1;
+		
+		if (n == 1) { 
+			assign_lock.lock(); ++groups; assign_lock.unlock();
+			sorted[p] = 1; 
+		}
+		
+		for (size_t i = p ; i < p+n ; ++i) 
+			isa_assign[ sa[i] ] = g;
+	}
 
 protected:
 	virtual void init();
 	virtual void doubling();
+	virtual void doubling(uint32, size_t);
+	
 
 public:
 
