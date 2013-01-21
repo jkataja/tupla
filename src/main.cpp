@@ -43,7 +43,8 @@ int main(int argc, char** argv) {
 			( "lcp,l", "compute LCP array as well" )
 			( "force,f", "force overwrite of existing output" )
 			( "validate,v", "validate generated suffix array (slow)" )
-			( "output,o", "output generated suffix array to stderr" )
+			( "output,o", "print generated suffix array to stderr" )
+			( "benchmark,b", "do not output file(s)" )
 			;
 
 		po::options_description hidden_opts;
@@ -86,8 +87,8 @@ int main(int argc, char** argv) {
 				% vm["input-file"].as<std::string>() % RankFileSuffix ) );
 
 		// Output already found
-		if (std::ifstream( out_name.c_str() ).is_open() 
-				&& !vm.count("force")) {
+		if (!vm.count("benchmark") && !vm.count("force")
+				&& std::ifstream( out_name.c_str() ).is_open())  {
 			std::cerr << SELF << ": output suffix array file '" << out_name 
 					<< "' already found" << std::endl;
 			std::cerr << SELF << ": use option -f to force overwrite" 
@@ -114,23 +115,25 @@ int main(int argc, char** argv) {
 		sorter->run();
 
 		// Compute LCP array from completed SA
-		if (vm.count("lcp") != 0) {
+		if (vm.count("lcp")) {
 			sorter->build_lcp();
 		}
 
 		// Run cross-validation test
-		if (vm.count("validate") != 0) {
+		if (vm.count("validate")) {
 			sorter->out_validate();
 		}
 
 		// Output completed suffix array
-		if (vm.count("output") != 0) {
+		if (vm.count("output")) {
 			sorter->out_sa();
 		}
 
 		// Output suffix array to file
-		const uint32 * const sa = sorter->get_sa();
-		write_byte_string(sa, ((len_eof) * sizeof(uint32)), out_name);
+		if (!vm.count("benchmark")) {
+			const uint32 * const sa = sorter->get_sa();
+			write_byte_string(sa, ((len_eof) * sizeof(uint32)), out_name);
+		}
 
 		delete [] text_eof;
 	}
