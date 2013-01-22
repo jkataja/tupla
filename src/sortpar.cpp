@@ -103,7 +103,7 @@ void sup::sortpar::tqsort(uint32 p, size_t n)
 
 	if (ltn > 0) sort_switch(p, ltn);
 	assign(p+ltn, eqn); 
-	if (gtn > 0) tqsort(pn-gtn, gtn);
+	if (gtn > 0) sort_switch(pn-gtn, gtn);
 }
 
 void sup::sortpar::build_lcp()
@@ -178,7 +178,7 @@ void sup::sortpar::init()
 	memset(sorted, 0, (len * sizeof(uint32)) );
 	memset(tcount, 0, (Alpha * jobs * sizeof(uint32)) );
 
-	size_t tstep = std::max(GrainSize, (len/jobs) + 1); 
+	size_t tstep = std::max(BucketSize, (len/jobs) + 1); 
 
 	// Count character occurences
 	{
@@ -249,29 +249,14 @@ void sup::sortpar::init()
 	}
 
 	// TODO Merge sorted[] at border
-	/*
-	size_t tlen = len;
-	for (size_t j = 1 ; j < jobs ; ++j) {
-		uint32 n = std::min(tlen, tstep);
-
-		if (tlen <= tstep) break;
-		tlen -= tstep; ptext += tstep;
-	}
-	*/
-	// Thread pool
-	tp.size_controller().resize(jobs);
-
 
 	delete [] tcount;
 }
 
-void sup::sortpar::doubling()
-{
-	memcpy(isa_assign, isa, sizeof(uint32) * len);
-
-	uint32 p = 0; // Starting index of sorted group
+void sup::sortpar::doubling(uint32 p, size_t n) {
+	uint32 sp = p; // Sorted group start
 	uint32 sl = 0; // Sorted groups length following start
-	for (size_t i = 0 ; i < len ; ) {
+	for (size_t i = p ; i < p+n ; ) {
 		// Skip sorted group
 		if (uint32 s = sorted[i]) {
 			i += s; sl += s;
@@ -279,18 +264,42 @@ void sup::sortpar::doubling()
 		} 
 		// Combine sorted group before i
 		if (sl > 0) {
-			assign_lock.lock(); sorted[p] = sl; assign_lock.unlock(); 
+			set_sorted(sp, sl);
 			sl = 0;
 		}
 		// Sort unsorted group i..g
 		uint32 g = isa[ sa[i] ] + 1;
-		sort_switch(i, g-i);
-		p = i = g;
+
+		tqsort(i, g-i);
+		//sort_switch(i, g-i);
+
+		sp = i = g;
+	}
+	// Combine sorted group at end
+	if (sl > 0) set_sorted(sp, sl);
+}
+
+void sup::sortpar::doubling()
+{
+	memcpy(isa_assign, isa, sizeof(uint32) * len);
+
+	// Thread pool
+	tp.size_controller().resize(jobs);
+
+	uint32 p = 0; // Starting index of bucket
+	uint32 step = std::max(BucketSize, (len/jobs) + 1);
+	// Buckets p..pn, with group or sorted group increasing pn
+	for (uint32 pn = step ; p<len ; p = pn , pn += step) {
+		if (pn > len) pn = len; // End of file
+		else if (!sorted[pn]) pn = isa[ sa[pn] ] + 1; // Group
+		
+		boost::shared_ptr<doubling_task> job(
+				new doubling_task(this, p, (pn-p)));
+		boost::threadpool::schedule(tp, 
+				boost::bind(&doubling_task::run, job));
+
 	}
 	tp.wait();
-
-	// Combine sorted group at end
-	if (sl > 0) sorted[p] = sl;
 
 	std::swap( isa, isa_assign );
 }

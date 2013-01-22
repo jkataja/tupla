@@ -74,12 +74,21 @@ private:
 		uint32 g = p + n - 1;
 		
 		if (n == 1) { 
-			assign_lock.lock(); ++groups; assign_lock.unlock();
-			sorted[p] = 1; 
+			assign_lock.lock(); 
+			++groups; 
+			sorted[p] = n; 
+			assign_lock.unlock(); 
 		}
-		
+
 		for (size_t i = p ; i < p+n ; ++i) 
 			isa_assign[ sa[i] ] = g;
+	}
+
+	inline void set_sorted(uint32 p, size_t n)
+	{
+		assign_lock.lock(); 
+		sorted[p] = n; 
+		assign_lock.unlock();
 	}
 
 protected:
