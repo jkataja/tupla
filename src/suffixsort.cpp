@@ -42,12 +42,13 @@ suffixsort * sup::suffixsort::instance(const char * text,
 void sup::suffixsort::run()
 {
 	// Allocate and initialize with counting sort
-	init();
+	uint32 alphasize = init();
+	err << SELF << ": alphabet size " << alphasize << std::endl;
 
 	// Doubling steps until number of sorting groups matches length
 	for (h = 1 ; (groups < len && h < len) ; h <<= 1) {
 		doubling();
-		std::cerr << SELF << ": doubling " << ffsl(h) 
+		err << SELF << ": doubling " << ffsl(h) 
 				<< " with " << groups << " singleton groups ("
 				<< std::fixed << std::setprecision(1) 
 				<< ((groups/(double)(len)) * 100) 
@@ -62,7 +63,7 @@ void sup::suffixsort::run()
 }
 
 
-void sup::suffixsort::tqsort(uint32 p, size_t n)
+uint32 sup::suffixsort::tqsort(uint32 p, size_t n)
 {
 	uint32 a,b,c,d;
 	uint32 pn = p + n;
@@ -73,7 +74,8 @@ void sup::suffixsort::tqsort(uint32 p, size_t n)
 	// @see http://en.wikipedia.org/wiki/Selection_sort#Variants
 	if (n < 7) {
 		a = pn-1;
-		uint32 eqn = 0;
+		uint32 eqn = 0; // Count of equal items
+		uint32 ns = 0; // Count of assigned singleton groups
 
 		// Find the highest value
 		uint64 v = k(a);
@@ -92,19 +94,19 @@ void sup::suffixsort::tqsort(uint32 p, size_t n)
 				else if (ki > v) v = ki;
 			}
 			// Assign items sharing highest value to new group
-			assign(a + 1, eqn);
+			assign(a + 1, eqn); ns += (eqn == 1);
 			eqn = 0;
 			while ((a > p) && (k(a) == v)) { --a; ++eqn; }
 		}
 		// First index also contained highest value
 		if (k(p) == v) {
-			assign(p, eqn + 1);
+			assign(p, eqn + 1); ns += (eqn == 0);
 		}
 		else {
-			assign(a + 1, eqn);
-			assign(p, 1);
+			assign(a + 1, eqn); ns += (eqn == 1);
+			assign(p, 1);  ++ns;
 		}
-		return;
+		return ns;
 	}
 	
 	const uint64 v = choose_pivot(p, n);
@@ -138,9 +140,15 @@ void sup::suffixsort::tqsort(uint32 p, size_t n)
 	const uint32 gtn = d-c;
 	const uint32 eqn = n - ltn - gtn;
 
-	if (ltn > 0) tqsort(p, ltn);
+	// New singleton groups in ranges less than and greater than pivot
+	uint32 lts = 0;
+	uint32 gts = 0;
+
+	if (ltn > 0) lts = tqsort(p, ltn);
 	assign(p+ltn, eqn); 
-	if (gtn > 0) tqsort(pn-gtn, gtn);
+	if (gtn > 0) gts = tqsort(pn-gtn, gtn);
+
+	return (lts + (eqn == 1) + gts);
 }
 
 const uint32 * const sup::suffixsort::get_sa()

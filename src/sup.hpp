@@ -34,15 +34,15 @@ static const uint32 JobsMin = 1;
 static const uint32 JobsMax = 64;
 
 // Minimum input size for assigning sort to a new thread
-static const uint32 GrainSize = (1 << 12);
-static const uint32 BucketSize = (1 << 16);
+static const uint32 GrainSize = (1 << 14);
+static const uint32 BucketSize = (1 << 18);
 
 // Get file size
 long stat_filesize(const std::string&);
 
 // Read byte string from file, returns pointer to allocated memory
 // plus one additional byte for null terminator 
-void * read_byte_string(const std::string&);
+void * read_byte_string(const std::string&, const uint32);
 
 // Write byte string to file
 void write_byte_string(const void * const, const size_t, const std::string&);

@@ -17,7 +17,8 @@ using namespace sup;
 
 sup::sortpar::sortpar(const char * text, const uint32 len, const uint32 jobs,
 		std::ostream& err)
-	: suffixsort(text, len, err), jobs(jobs)
+	: suffixsort(text, len, err), jobs(jobs), 
+	  cakeslice( std::min( std::max(BucketSize, (len/jobs) + 1) , len) )
 {
 }
 
@@ -25,18 +26,19 @@ sup::sortpar::~sortpar()
 {
 }
 
-void sup::sortpar::tqsort(uint32 p, size_t n)
+uint32 sup::sortpar::tqsort(uint32 p, size_t n)
 {
 	uint32 a,b,c,d;
 	uint32 pn = p + n;
-
+	
 	// Sort small tables with bingo sort 
 	// Supposedly more efficient than selection sort with duplicate values
 	// Adapted from:
 	// @see http://en.wikipedia.org/wiki/Selection_sort#Variants
 	if (n < 7) {
 		a = pn-1;
-		uint32 eqn = 0;
+		uint32 eqn = 0; // Count of equal items
+		uint32 ns = 0; // Count of assigned singleton groups
 
 		// Find the highest value
 		uint64 v = k(a);
@@ -55,19 +57,19 @@ void sup::sortpar::tqsort(uint32 p, size_t n)
 				else if (ki > v) v = ki;
 			}
 			// Assign items sharing highest value to new group
-			assign(a + 1, eqn);
+			assign(a + 1, eqn); ns += (eqn == 1);
 			eqn = 0;
 			while ((a > p) && (k(a) == v)) { --a; ++eqn; }
 		}
 		// First index also contained highest value
 		if (k(p) == v) {
-			assign(p, eqn + 1);
+			assign(p, eqn + 1); ns += (eqn == 0);
 		}
 		else {
-			assign(a + 1, eqn);
-			assign(p, 1);
+			assign(a + 1, eqn); ns += (eqn == 1);
+			assign(p, 1);  ++ns;
 		}
-		return;
+		return ns;
 	}
 	
 	const uint64 v = choose_pivot(p, n);
@@ -77,7 +79,7 @@ void sup::sortpar::tqsort(uint32 p, size_t n)
 	c = d = p + (n-1);
 
 	// Assume on range i=f..g value ISA_h[ SA_h[i] ] is equal
-	// Only use the doubling part  ISA_h[ SA_h[i] + h ] as comparison key
+	// Only use the doubling part  ISA_h[ SA_h[i] + h ] in comparison
 	uint32 sv = (v & 0xFFFFFFFF);
 	uint32 tv;
 	for (;;) {
@@ -101,9 +103,15 @@ void sup::sortpar::tqsort(uint32 p, size_t n)
 	const uint32 gtn = d-c;
 	const uint32 eqn = n - ltn - gtn;
 
-	if (ltn > 0) sort_switch(p, ltn);
+	// New singleton groups in ranges less than and greater than pivot
+	uint32 lts = 0;
+	uint32 gts = 0;
+
+	if (ltn > 0) lts = sort_switch(p, ltn);
 	assign(p+ltn, eqn); 
-	if (gtn > 0) sort_switch(pn-gtn, gtn);
+	if (gtn > 0) gts = sort_switch(pn-gtn, gtn);
+
+	return (lts + (eqn == 1) + gts);
 }
 
 void sup::sortpar::build_lcp()
@@ -161,8 +169,49 @@ void sup::sortpar::tcsort(uint32 ptext, uint32 n, uint32 * pcount,
 	}
 }
 
-void sup::sortpar::init()
+void sup::sortpar::init_count(uint32 * tcount, uint32 * count)
 {
+	boost::thread_group tccount_group;
+	size_t p = 0; 
+	size_t n = len; 
+
+	for (size_t j = 0 ; j < jobs ; ++j) {
+		uint32 * pcount = (tcount + (Alpha * j)); 
+
+		tccount_group.create_thread( boost::bind(&sup::sortpar::tccount, 
+				this, p, std::min(n, cakeslice), pcount) );
+
+		if (n <= cakeslice) break;
+		n -= cakeslice; p += cakeslice;
+	}
+	tccount_group.join_all();
+
+	for (size_t i = 0 ; i < (jobs * Alpha) ; ++i)
+		count[i & 0xFF] += tcount[i];
+}
+
+void sup::sortpar::init_sort(uint32 * tcount, uint32 * group)
+{
+       boost::thread_group tcsort_group;
+       size_t p = 0;
+       size_t n = len;
+
+       for (size_t j = 0 ; j < jobs ; ++j) {
+	       uint32 * pcount = (tcount + (Alpha * j));
+
+	       tcsort_group.create_thread(
+			       boost::bind(&sup::sortpar::tcsort, this,
+				       p, std::min(n, cakeslice), pcount, group) );
+
+	       if (n <= cakeslice) break;
+	       n -= cakeslice; p += cakeslice;
+       }
+       tcsort_group.join_all();
+}
+
+uint32 sup::sortpar::init()
+{
+	uint32 alphasize = 0;
 	uint32 group[Alpha] = { Z256 };
 	uint32 count[Alpha] = { Z256 };
 
@@ -178,31 +227,9 @@ void sup::sortpar::init()
 	memset(sorted, 0, (len * sizeof(uint32)) );
 	memset(tcount, 0, (Alpha * jobs * sizeof(uint32)) );
 
-	size_t tstep = std::max(BucketSize, (len/jobs) + 1); 
+	// Count characters
+	init_count(tcount, count);
 
-	// Count character occurences
-	{
-		boost::thread_group tccount_group;
-		size_t ptext = 0;
-		size_t tlen = len;
-
-		for (size_t j = 0 ; j < jobs ; ++j) {
-			uint32 n = std::min(tlen, tstep);
-			uint32 * pcount = (tcount + (Alpha * j));
-
-			tccount_group.create_thread(
-					boost::bind(&sup::sortpar::tccount, this, 
-							ptext, n, pcount) );
-
-			if (tlen <= tstep) break;
-			tlen -= tstep; ptext += tstep;
-		}
-		tccount_group.join_all();
-	}
-	// Merge
-	for (size_t i = 0 ; i < (jobs * Alpha) ; ++i)
-		count[i & 0xFF] += tcount[i];
-	
 	// Multiple nulls in input
 	if (count[0] != 1) 
 		throw std::runtime_error("input contains multiple nulls");
@@ -226,36 +253,24 @@ void sup::sortpar::init()
 		}
 
 		f += n;
+
+		alphasize += (n > 0);
 	}
 
 	// Counting sort
-	{
-		boost::thread_group tcsort_group;
-		size_t ptext = 0;
-		size_t tlen = len;
-
-		for (size_t j = 0 ; j < jobs ; ++j) {
-			uint32 n = std::min(tlen, tstep);
-			uint32 * pcount = (tcount + (Alpha * j));
-
-			tcsort_group.create_thread(
-					boost::bind(&sup::sortpar::tcsort, this, 
-							ptext, n, pcount, group) );
-
-			if (tlen <= tstep) break;
-			tlen -= tstep; ptext += tstep;
-		}
-		tcsort_group.join_all();
-	}
+	init_sort(tcount, group);
 
 	// TODO Merge sorted[] at border
 
 	delete [] tcount;
+
+	return alphasize;
 }
 
 void sup::sortpar::doubling(uint32 p, size_t n) {
 	uint32 sp = p; // Sorted group start
 	uint32 sl = 0; // Sorted groups length following start
+	uint32 ns = 0; // New singleton groups g
 	for (size_t i = p ; i < p+n ; ) {
 		// Skip sorted group
 		if (uint32 s = sorted[i]) {
@@ -264,19 +279,23 @@ void sup::sortpar::doubling(uint32 p, size_t n) {
 		} 
 		// Combine sorted group before i
 		if (sl > 0) {
-			set_sorted(sp, sl);
+			sorted[sp] = sl;
 			sl = 0;
 		}
 		// Sort unsorted group i..g
 		uint32 g = isa[ sa[i] ] + 1;
 
-		tqsort(i, g-i);
-		//sort_switch(i, g-i);
+		//tqsort(i, g-i);
+		ns += sort_switch(i, g-i);
 
 		sp = i = g;
 	}
 	// Combine sorted group at end
-	if (sl > 0) set_sorted(sp, sl);
+	if (sl > 0) sorted[sp] = sl;
+
+	groups_lock.lock();
+	groups += ns;
+	groups_lock.unlock();
 }
 
 void sup::sortpar::doubling()
@@ -287,12 +306,12 @@ void sup::sortpar::doubling()
 	tp.size_controller().resize(jobs);
 
 	uint32 p = 0; // Starting index of bucket
-	uint32 step = std::max(BucketSize, (len/jobs) + 1);
-	// Buckets p..pn, with group or sorted group increasing pn
-	for (uint32 pn = step ; p<len ; p = pn , pn += step) {
-		if (pn > len) pn = len; // End of file
-		else if (!sorted[pn]) pn = isa[ sa[pn] ] + 1; // Group
-		
+
+	// Buckets p..pn
+	for (uint32 pn = BucketSize ; p < len ; p = pn , pn += BucketSize) {
+		if (pn > len - h) pn = len; // End of file
+		else if (!sorted[pn]) pn = isa[ sa[pn] ] + 1; // Last in group
+
 		boost::shared_ptr<doubling_task> job(
 				new doubling_task(this, p, (pn-p)));
 		boost::threadpool::schedule(tp, 
@@ -300,6 +319,10 @@ void sup::sortpar::doubling()
 
 	}
 	tp.wait();
+
+	// Keep count of assigned singletons
+	for (auto it : tasks) groups += it.groups;
+	tasks.clear();
 
 	std::swap( isa, isa_assign );
 }

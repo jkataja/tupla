@@ -60,7 +60,7 @@ int main(int argc, char** argv) {
 
 		uint32 textlen = (uint32)text_filesize;
 		uint32 textlen_eof = textlen + 1;
-		char * text_eof = (char *)read_byte_string(text_name);
+		char * text_eof = (char *)read_byte_string(text_name, textlen);
 
 		if (has_null(text_eof, textlen)) {
 			std::cerr << SELF << ": input contains nulls"

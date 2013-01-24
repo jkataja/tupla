@@ -17,14 +17,15 @@ long sup::stat_filesize(const std::string& filename) {
 	return (rc == 0 ? stat_buf.st_size : -1);
 }
 
-void * sup::read_byte_string(const std::string& filename) {
-	long len = stat_filesize(filename);
+void * sup::read_byte_string(const std::string& filename, const uint32 len) {
 	long len_eof = len + 1;
 
-	// empty file
-	if (len == 0) {
-		return new char[1];
+	if (len > stat_filesize(filename)) {
+		throw std::runtime_error("attempt to read past input");
 	}
+
+	// empty file
+	if (len == 0) return new char[1]();
 
 	boost::iostreams::mapped_file_source in;
 	try {
@@ -51,7 +52,7 @@ void * sup::read_byte_string(const std::string& filename) {
 
 void sup::write_byte_string(const void * const data, const size_t len, 
 		const std::string& filename) {
-	boost::iostreams::mapped_file_sink out;
+	boost::iostreams::mapped_file_sink out(filename);
 	boost::iostreams::mapped_file_params out_params;
 	out_params.path = filename;
 	out_params.length = len;

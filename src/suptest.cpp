@@ -55,7 +55,7 @@ void run_sequential(const std::string& in_name, uint32 * expect)
 
 	uint32 len = (uint32)in_filesize;
 	uint32 len_eof = len + 1;
-	char * text_eof = (char *)read_byte_string(in_name);
+	char * text_eof = (char *)read_byte_string(in_name, len);
 
 	BOOST_CHECK( !has_null(text_eof, len) );
 
@@ -83,7 +83,7 @@ void run_parallel(std::string& in_name, uint32 * expect,
 
 	uint32 len = (uint32)in_filesize;
 	uint32 len_eof = len + 1;
-	char * text_eof = (char *)read_byte_string(in_name);
+	char * text_eof = (char *)read_byte_string(in_name, len);
 
 	BOOST_CHECK( !has_null(text_eof, len) );
 
@@ -106,13 +106,13 @@ BOOST_AUTO_TEST_CASE( read_text )
 {
 	// test/empty
 	{
-		char * text = (char *)read_byte_string("test/empty");
+		char * text = (char *)read_byte_string("test/empty", 0);
 		BOOST_CHECK( strcmp("", text) == 0 );
 		delete [] text;
 	}
 	// test/banana
 	{
-		char * text = (char *)read_byte_string("data/trivial/banana");
+		char * text = (char *)read_byte_string("data/trivial/banana", 7);
 		BOOST_CHECK( strcmp("banana", text) == 0 );
 		delete [] text;
 	}
@@ -137,7 +137,7 @@ BOOST_AUTO_TEST_CASE( read_binary )
 {
 	// test/cafebabe
 	{
-		uint32 * data = (uint32 *)read_byte_string("test/cafebabe");
+		uint32 * data = (uint32 *)read_byte_string("test/cafebabe", 8);
 		BOOST_CHECK( *data == 0xCAFEBABE );
 		delete [] data;
 	}

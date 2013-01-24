@@ -45,7 +45,14 @@ int main(int argc, char** argv) {
 			( "validate,v", "validate generated suffix array (slow)" )
 			( "output,o", "print generated suffix array to stderr" )
 			( "benchmark,b", "do not output file(s)" )
+			( "count,n", 
+			  po::value<uint32>()->default_value(
+					std::numeric_limits<uint32>::max() - sizeof(uint32)),
+			  "stop processing input after n bytes" 
+			)
 			;
+
+		// TODO accept k and M in count
 
 		po::options_description hidden_opts;
 		hidden_opts.add_options()
@@ -106,8 +113,16 @@ int main(int argc, char** argv) {
 			return EXIT_FAILURE;
 		}
 		uint32 len = (uint32)in_filesize;
+
+		// Limit input bytes to read
+		if (vm.count("count")) {
+			uint32 maxcount = vm["count"].as<uint32>();
+			if (maxcount < len) len = std::min(len, maxcount);
+		}
 		uint32 len_eof = len + 1;
-		char * text_eof = (char *)read_byte_string(in_name);
+
+		// TODO read from stdin
+		char * text_eof = (char *)read_byte_string(in_name, len);
 
 		std::unique_ptr<suffixsort> sorter( suffixsort::instance( text_eof,
 				len_eof, vm["jobs"].as<uint32>(), std::cerr) );

@@ -8,10 +8,12 @@ namespace sup {
 class tqsort_task
 {
 public:
+
 	tqsort_task(suffixsort * sorter, uint32 p, size_t n)
-		: sorter(sorter), p(p), n(n) 
+		: groups(0), sorter(sorter), p(p), n(n)
 	{
 	}
+
 
 	void run()
 	{
@@ -21,8 +23,10 @@ public:
 				<< std::endl;
 		sorter->err_lock.unlock();
 		*/
-		sorter->tqsort(p, n);
+		groups = sorter->tqsort(p, n);
 	}
+
+	uint32 groups;
 
 protected:
 	suffixsort * sorter;

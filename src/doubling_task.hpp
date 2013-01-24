@@ -15,12 +15,6 @@ public:
 
 	void run()
 	{
-	/*
-		sorter->err_lock.lock();
-		sorter->err << "doubling_task::run(" << p << "," << n << ")" 
-				<< std::endl;
-		sorter->err_lock.unlock();
-		*/
 		sorter->doubling(p, n);
 	}
 

@@ -41,8 +41,9 @@ void sup::sortseq::build_lcp()
 
 }
 
-void sup::sortseq::init()
+uint32 sup::sortseq::init()
 {
+	uint32 alphasize = 0;
 	uint32 group[Alpha] = { Z256 };
 	uint32 count[Alpha] = { Z256 };
 	
@@ -71,6 +72,7 @@ void sup::sortseq::init()
 		group[i] = g; // Sorting group key 
 		groups += sorted[f] = (n == 1); // Singleton group is sorted
 		f += n;
+		alphasize += (n > 0);
 	}
 	uint32 p = 0; // Starting index of sorted group
 	uint32 sl = 0; // Length of sorted groups following p
@@ -91,6 +93,7 @@ void sup::sortseq::init()
 		}
 		p = i + 1;
 	}
+	return alphasize;
 }
 
 void sup::sortseq::doubling()
@@ -110,7 +113,7 @@ void sup::sortseq::doubling()
 		}
 		// Sort unsorted group i..g
 		uint32 g = isa[ sa[i] ] + 1;
-		tqsort(i, g-i);
+		groups += tqsort(i, g-i);
 		p = i = g;
 	}
 	// Combine sorted group at end

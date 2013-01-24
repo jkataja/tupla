@@ -18,7 +18,7 @@
 
 #include <iostream>
 #include <boost/cstdint.hpp>
-#include <boost/signals2/mutex.hpp>
+#include <boost/thread/mutex.hpp>
 
 #include "numdefs.hpp"
 
@@ -26,10 +26,8 @@ namespace sup {
 
 class suffixsort {
 
-    friend class tqsort_task;
-    friend class doubling_task;
-
-	boost::signals2::mutex err_lock;
+	friend class tqsort_task;
+	friend class doubling_task;
 
 private:
 	suffixsort(const suffixsort&);
@@ -41,7 +39,7 @@ protected:
 	uint32 * lcp; // LCP array built from completed ISA
 	uint32 * sorted; // Length of sorted group starting from index
 
-	uint64 h; // Current suffix doubling distance
+	size_t h; // Current suffix doubling distance
 
 	const char * const text; // Input
 	const uint32 len; // Length of input
@@ -57,7 +55,7 @@ protected:
 
 	// Allocate and initialize suffix array and inverse suffix array
 	// Sort first round using counting sort on first character
-	virtual void init() = 0;
+	virtual uint32 init() = 0;
 
 	// Doubling step
 	virtual void doubling() = 0;
@@ -71,7 +69,7 @@ protected:
 
 	// Sort range using ternary split quick sort
 	// Based on Bentley-McIlroy 1993: Engineering a Sort Function
-	virtual void tqsort(uint32, size_t);
+	virtual uint32 tqsort(uint32, size_t);
 
 	// Determine median value of three suffix array elements
 	// Returns index to position where median was found
@@ -134,7 +132,9 @@ protected:
 	inline void assign(uint32 p, size_t n)
 	{
 		uint32 g = p + n - 1;
-		if (n == 1) { ++groups; sorted[p] = 1; }
+
+		if (n == 1) sorted[p] = 1; // Mark as sorted singleton group
+
 		for (size_t i = p ; i < p+n ; ++i) 
 			isa[ sa[i] ] = g;
 	}
