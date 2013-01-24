@@ -44,13 +44,18 @@ void sup::suffixsort::run()
 	// Allocate and initialize with counting sort
 	uint32 alphasize = init();
 	err << SELF << ": alphabet size " << alphasize << std::endl;
+	uint32 precision = 1;
 
 	// Doubling steps until number of sorting groups matches length
 	for (h = 1 ; (groups < len && h < len) ; h <<= 1) {
 		doubling();
+
+		if (groups == len) precision = 1;
+		else if ((groups/(double)len) > 0.999) ++precision;
+
 		err << SELF << ": doubling " << ffsl(h) 
 				<< " with " << groups << " singleton groups ("
-				<< std::fixed << std::setprecision(1) 
+				<< std::fixed << std::setprecision(precision)
 				<< ((groups/(double)(len)) * 100) 
 				<< "% complete)" << std::endl;
 	}
