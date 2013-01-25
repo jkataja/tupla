@@ -34,9 +34,9 @@ private:
 	suffixsort& operator=(const suffixsort&);
 
 protected:
-	uint32 * sa;  // Suffixes sorted in h-order
-	uint32 * isa; // Sorting keys for suffix starting from index
-	uint32 * lcp; // LCP array built from completed ISA
+	uint32 * sa;  // Suffixes in lexicographical h-order 
+	uint32 * isa; // h-order keys of the suffix starting from i
+	uint32 * lcp; // LCP built from completed suffix array
 
 	size_t h; // Current suffix doubling distance
 
@@ -108,10 +108,12 @@ protected:
 	// Returns pair ( ISA_h[ SA_h[p] ] , ISA_h[ SA_h[p] + h] ) packed in long
 	inline uint64 k(const uint32 p)
 	{
-		uint32 sap = sa[p];
-		return (sap + h < len 
-				? (((uint64)isa[ sap ] << 32) | isa[ sap + h ] )
-				:  ((uint64)isa[ sap ] << 32) ); 
+		uint32 v = sa[p];
+		if (v<0) {std::cerr<<"k("<<p<<")"<<std::endl;}
+
+		return (v + h < len 
+				? (((uint64)isa[ v ] << 32) | isa[ v + h ] )
+				:  ((uint64)isa[ v ] << 32) ); 
 	}
 
 	// Swap suffix array elements at indices
@@ -142,14 +144,19 @@ protected:
 	// First byte set in suffix array sets sorted flag
 	inline void set_sorted(uint32 p, uint32 n)
 	{
+		//sa[p] = -n;
 		sa[p] = (0x80000000U ^ n);
+		
 	}
 
 	// Length of sorted group starting from p
 	inline uint32 get_sorted(uint32 p)
 	{
+		//int32 v = sa[p];
+		//return (v < 0 ? -v : 0);
 		uint32 v = sa[p];
 		return ((v >> 31) ? (0x7FFFFFFFU & v) : 0); 
+		
 	}
 
 public:

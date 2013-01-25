@@ -62,12 +62,6 @@ int main(int argc, char** argv) {
 		uint32 textlen_eof = textlen + 1;
 		char * text_eof = (char *)read_byte_string(text_name, textlen);
 
-		if (has_null(text_eof, textlen)) {
-			std::cerr << SELF << ": input contains nulls"
-					<< std::endl << std::flush;
-			return EXIT_FAILURE;
-		}
-
 		// map input rank file
 		std::string rank_filename( boost::str( boost::format("%1%.%2%") 
 				% text_name % RankFileSuffix ) );

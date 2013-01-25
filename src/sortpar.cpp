@@ -138,13 +138,13 @@ void sup::sortpar::build_lcp()
 
 }
 
-void sup::sortpar::tccount(uint32 ptext, uint32 n, uint32 * pcount)
+void sup::sortpar::tccount(uint32 ptext, uint32 n, uint32 * task_count)
 {
 	for (size_t i = ptext ; i < ptext+n ; ++i) 
-		++pcount[  (uint8)*(text + i) ];
+		++task_count[  (uint8)*(text + i) ];
 }
 
-void sup::sortpar::tcsort(uint32 ptext, uint32 n, uint32 * pcount,
+void sup::sortpar::tcsort(uint32 ptext, uint32 n, uint32 * task_count,
 		uint32 * group, uint8 * sorted)
 {
 	uint32 p = 0; // Starting index of sorted group
@@ -152,7 +152,7 @@ void sup::sortpar::tcsort(uint32 ptext, uint32 n, uint32 * pcount,
 
 	for (size_t i = ptext ; i < ptext+n ; ++i) {
 		uint8 c = (uint8)*(text + i);
-		uint32 j = pcount[c]++;
+		uint32 j = task_count[c]++;
 		// Counting sort f..g
 		sa[j] = i;
 		// Sorting key for range f..g is g
@@ -172,17 +172,17 @@ void sup::sortpar::tcsort(uint32 ptext, uint32 n, uint32 * pcount,
 	}
 }
 
-void sup::sortpar::init_count(uint32 * tcount, uint32 * count)
+void sup::sortpar::init_count(uint32 * range_count, uint32 * count)
 {
 	boost::thread_group tccount_group;
 	size_t p = 0; 
 	size_t n = len; 
 
 	for (size_t j = 0 ; j < jobs ; ++j) {
-		uint32 * pcount = (tcount + (Alpha * j)); 
+		uint32 * task_count = (range_count + (Alpha * j)); 
 
 		tccount_group.create_thread( boost::bind(&sup::sortpar::tccount, 
-				this, p, std::min(n, cakeslice), pcount) );
+				this, p, std::min(n, cakeslice), task_count) );
 
 		if (n <= cakeslice) break;
 		n -= cakeslice; p += cakeslice;
@@ -191,21 +191,22 @@ void sup::sortpar::init_count(uint32 * tcount, uint32 * count)
 
 	// Merge
 	for (size_t i = 0 ; i < (jobs * Alpha) ; ++i)
-		count[i & 0xFF] += tcount[i];
+		count[i & 0xFF] += range_count[i];
 }
 
-void sup::sortpar::init_sort(uint32 * tcount, uint32 * group, uint8 * sorted)
+void sup::sortpar::init_sort(uint32 * range_count, uint32 * group, 
+		uint8 * sorted)
 {
 	boost::thread_group tcsort_group;
 	size_t p = 0;
 	size_t n = len;
 
 	for (size_t j = 0 ; j < jobs ; ++j) {
-		uint32 * pcount = (tcount + (Alpha * j));
+		uint32 * task_count = (range_count + (Alpha * j));
 
 		tcsort_group.create_thread(
 				boost::bind(&sup::sortpar::tcsort, this,
-					p, std::min(n, cakeslice), pcount, group, sorted) );
+					p, std::min(n, cakeslice), task_count, group, sorted) );
 
 		if (n <= cakeslice) break;
 		n -= cakeslice; p += cakeslice;
@@ -224,15 +225,15 @@ uint32 sup::sortpar::init()
 	isa = new uint32[len];
 	isa_assign = new uint32[len];
 
-	// Per thread character counts
-	uint32 * tcount = new uint32[Alpha * jobs];
+	// Thread specific character counts
+	uint32 * range_count = new uint32[Alpha * jobs];
 
 	memset(sa, 0, (len * sizeof(uint32)) );
 	memset(isa, 0, (len * sizeof(uint32)) );
-	memset(tcount, 0, (Alpha * jobs * sizeof(uint32)) );
+	memset(range_count, 0, (Alpha * jobs * sizeof(uint32)) );
 
 	// Count characters
-	init_count(tcount, count);
+	init_count(range_count, count);
 
 	// Multiple nulls in input
 	if (count[0] != 1) {
@@ -243,17 +244,17 @@ uint32 sup::sortpar::init()
 	uint32 f = 0; // First index in group
 	for (size_t i = 0 ; i < Alpha ; ++i) {
 		uint32 n = count[i];
-		uint32 tn = tcount[i]; // Count in thread segment
+		uint32 tn = range_count[i]; // Count in thread segment
 		uint32 g = f + n - 1; // Last position in group f..g
 
 		group[i] = g; // Assign group sorting key to last index in f..g
 		groups += sorted[i] = (n == 1); // Singleton group is sorted
 
 		// Counting sort starts from f for first and f+tn for following threads
-		tcount[i] = f; 
+		range_count[i] = f; 
 		for (size_t j = 1 ; j < jobs ; ++j) {
-			uint32 tin = tcount[(j * Alpha) + i];
-			tcount[(j * Alpha) + i] = f + tn;
+			uint32 tin = range_count[(j * Alpha) + i];
+			range_count[(j * Alpha) + i] = f + tn;
 			tn += tin;
 		}
 
@@ -263,11 +264,11 @@ uint32 sup::sortpar::init()
 	}
 
 	// Counting sort
-	init_sort(tcount, group, sorted);
+	init_sort(range_count, group, sorted);
 
 	// TODO Merge sorted[] at border
 
-	delete [] tcount;
+	delete [] range_count;
 
 	return alphasize;
 }

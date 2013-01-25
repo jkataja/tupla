@@ -72,8 +72,4 @@ void sup::write_byte_string(const void * const data, const size_t len,
 	out.close();
 }
 
-bool sup::has_null(const char * data_eof, const size_t expected) {
-	return (strlen(data_eof) != expected);
-}
-
 // vim:set ts=4 sts=4 sw=4 noexpandtab:

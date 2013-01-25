@@ -57,8 +57,6 @@ void run_sequential(const std::string& in_name, uint32 * expect)
 	uint32 len_eof = len + 1;
 	char * text_eof = (char *)read_byte_string(in_name, len);
 
-	BOOST_CHECK( !has_null(text_eof, len) );
-
 	std::unique_ptr<suffixsort> sorter( suffixsort::instance( text_eof,
 			len_eof, 1, std::cerr) );
 
@@ -85,8 +83,6 @@ void run_parallel(std::string& in_name, uint32 * expect,
 	uint32 len_eof = len + 1;
 	char * text_eof = (char *)read_byte_string(in_name, len);
 
-	BOOST_CHECK( !has_null(text_eof, len) );
-
 	std::unique_ptr<suffixsort> sorter( suffixsort::instance( text_eof,
 			len_eof, jobs, std::cerr) );
 
@@ -112,7 +108,7 @@ BOOST_AUTO_TEST_CASE( read_text )
 	}
 	// test/banana
 	{
-		char * text = (char *)read_byte_string("data/trivial/banana", 7);
+		char * text = (char *)read_byte_string("data/trivial/banana", 6);
 		BOOST_CHECK( strcmp("banana", text) == 0 );
 		delete [] text;
 	}
@@ -125,12 +121,6 @@ BOOST_AUTO_TEST_CASE( write_binary )
 		uint32 data = 0xCAFEBABE;
 		write_byte_string(&data, 4, "test/cafebabe");
 	}
-}
-
-BOOST_AUTO_TEST_CASE( null_str )
-{
-	BOOST_CHECK( !has_null("can't has null", 14) );
-	BOOST_CHECK( has_null("can\0has\0null", 14) );
 }
 
 BOOST_AUTO_TEST_CASE( read_binary ) 

@@ -48,6 +48,7 @@ void sup::suffixsort::run()
 	// Doubling steps until number of sorting groups matches length
 	for (h = 1 ; (groups < len && h < len) ; h <<= 1) {
 		doubling();
+
 		double done = groups/(double)len;
 		if (groups == len) precision = 1;
 		else if (done >= 0.9995) ++precision;
@@ -190,7 +191,7 @@ bool sup::suffixsort::out_descending()
 			++descending;
 		}
 	}
-	err << SELF << ": found " << descending << " in descending order" << std::endl;
+	err << SELF << ": found " << descending << " pairs of suffixes in descending order" << std::endl;
 	return (descending > 0);
 }
 
@@ -250,13 +251,12 @@ bool sup::suffixsort::out_validate()
 	}
 
 	uint32 dupes = count_dupes();
-	err << SELF << ": found " << dupes << " duplicates in ISA" << std::endl;
+	if (dupes > 0) err << SELF << ": found " << dupes 
+			<< " duplicates suffixes in ISA" << std::endl;
 
 	bool eq = is_xvalid();
-	if (!eq) err << SELF << ": final SA and ISA __DO_NOT__ match" << std::endl;
-	else err << SELF << ": final SA and ISA match" << std::endl;
+	if (!eq) err << SELF << ": final SA and ISA do not match" << std::endl;
 
-	err << SELF << ": checking if ISA is in ascending order" << std::endl;
 	out_descending();
 
 	if (finished_lcp) {

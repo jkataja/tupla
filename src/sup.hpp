@@ -47,9 +47,6 @@ void * read_byte_string(const std::string&, const uint32);
 // Write byte string to file
 void write_byte_string(const void * const, const size_t, const std::string&);
 
-// String length matches expected length
-bool has_null(const char *, const size_t);
-
 } // namespace
 
 // vim:set ts=4 sts=4 sw=4 noexpandtab:
