@@ -12,7 +12,7 @@
 using namespace sup;
 
 suffixsort::suffixsort(const char * text, const uint32 len, std::ostream& err)
-	: sa(0), isa(0), lcp(0), sorted(0), h(0), text(text), len(len), groups(0),
+	: sa(0), isa(0), lcp(0), h(0), text(text), len(len), groups(0),
 	  err(err), finished_sa(false), finished_lcp(false)
 {
 }
@@ -22,7 +22,6 @@ suffixsort::~suffixsort()
 	delete [] sa;
 	delete [] isa;
 	delete [] lcp;
-	delete [] sorted;
 }
 
 suffixsort * sup::suffixsort::instance(const char * text, 
@@ -49,14 +48,13 @@ void sup::suffixsort::run()
 	// Doubling steps until number of sorting groups matches length
 	for (h = 1 ; (groups < len && h < len) ; h <<= 1) {
 		doubling();
-
+		double done = groups/(double)len;
 		if (groups == len) precision = 1;
-		else if ((groups/(double)len) > 0.999) ++precision;
+		else if (done >= 0.9995) ++precision;
 
 		err << SELF << ": doubling " << ffsl(h) 
 				<< " with " << groups << " singleton groups ("
-				<< std::fixed << std::setprecision(precision)
-				<< ((groups/(double)(len)) * 100) 
+				<< std::fixed << std::setprecision(precision) << (done * 100) 
 				<< "% complete)" << std::endl;
 	}
 
@@ -224,17 +222,23 @@ void sup::suffixsort::out_sa(uint32 p, size_t n)
 
 void sup::suffixsort::out_sa()
 {
-	err << "i\tsa[i]\tsorted\torder            suffix" << std::endl;
+	err << "i\tsa[i]\torder            suffix" << std::endl;
 	for (size_t i = 0 ; i<len ; ++i)  {
-		std::string str( (text + sa[i]) );
-		str.append("$");
-		if (str.length() > 36) str.erase(36);
-		std::replace( str.begin(), str.end(), '\n', '#');
-		std::replace( str.begin(), str.end(), '\t', '#');
-		err << std::hex << i << "\t"  << sa[i] << "\t"  
-			<< std::dec << sorted[i] << "\t" 
-			<< std::hex << std::setw(16) << std::setfill('0') << k(i) 
-			<< std::dec << " '" << str << "'" << std::endl;
+		if (get_sorted(i)) {
+			err << std::hex << i << std::dec << "\t"  
+					<< get_sorted(i) << std::endl;
+		}
+		else {
+			std::string str( (text + sa[i]) );
+			str.append("$");
+			if (str.length() > 44) str.erase(44);
+			std::replace( str.begin(), str.end(), '\n', '#');
+			std::replace( str.begin(), str.end(), '\t', '#');
+			err << std::hex << i << "\t"  << sa[i] << "\t"  
+				<< std::dec << get_sorted(i) << "\t" 
+				<< std::hex << std::setw(16) << std::setfill('0') << k(i) 
+				<< std::dec << " '" << str << "'" << std::endl;
+		}
 	}
 }
 

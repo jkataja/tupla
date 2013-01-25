@@ -37,7 +37,6 @@ protected:
 	uint32 * sa;  // Suffixes sorted in h-order
 	uint32 * isa; // Sorting keys for suffix starting from index
 	uint32 * lcp; // LCP array built from completed ISA
-	uint32 * sorted; // Length of sorted group starting from index
 
 	size_t h; // Current suffix doubling distance
 
@@ -133,10 +132,24 @@ protected:
 	{
 		uint32 g = p + n - 1;
 
-		if (n == 1) sorted[p] = 1; // Mark as sorted singleton group
-
 		for (size_t i = p ; i < p+n ; ++i) 
 			isa[ sa[i] ] = g;
+		
+		if (n == 1) set_sorted(p, 1); // Mark as sorted singleton group
+
+	}
+
+	// First byte set in suffix array sets sorted flag
+	inline void set_sorted(uint32 p, uint32 n)
+	{
+		sa[p] = (0x80000000U ^ n);
+	}
+
+	// Length of sorted group starting from p
+	inline uint32 get_sorted(uint32 p)
+	{
+		uint32 v = sa[p];
+		return ((v >> 31) ? (0x7FFFFFFFU & v) : 0); 
 	}
 
 public:

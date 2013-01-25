@@ -46,14 +46,13 @@ uint32 sup::sortseq::init()
 	uint32 alphasize = 0;
 	uint32 group[Alpha] = { Z256 };
 	uint32 count[Alpha] = { Z256 };
+	uint8 sorted[Alpha] = { Z256 };
 	
 	sa = new uint32[len];
 	isa = new uint32[len];
-	sorted = new uint32[len];
 
 	memset(sa, 0, (len * sizeof(uint32)) );
 	memset(isa, 0, (len * sizeof(uint32)) );
-	memset(sorted, 0, (len * sizeof(uint32)) );
 
 	// Count character occurences
 	for (size_t i = 0 ; i < len ; ++i) 
@@ -70,25 +69,28 @@ uint32 sup::sortseq::init()
 		uint32 g = f + n - 1; // Last position in group f..g
 		count[i] = f; // Starting counting sort from f
 		group[i] = g; // Sorting group key 
-		groups += sorted[f] = (n == 1); // Singleton group is sorted
+		groups += sorted[i] = (n == 1); // Singleton group
 		f += n;
 		alphasize += (n > 0);
 	}
 	uint32 p = 0; // Starting index of sorted group
 	uint32 sl = 0; // Length of sorted groups following p
 	for (size_t i = 0 ; i < len ; ++i) {
+		uint8 c = (uint8)*(text + i);
+		uint32 j = count[ c ]++;
 		// Counting sort f..g
-		sa[ count[  (uint8)*(text + i) ]++ ] = i;
+		sa[j] = i;
 		// Sorting key for range f..g is g
-		isa[i] = group[ (uint8)*(text + i) ];
+		isa[i] = group[c];
 		// Increase sorted group length
-		if (uint32 s = sorted[i]) {
+		if (sorted[c]) set_sorted(j, 1);
+		if (uint32 s = get_sorted(j)) {
 			sl += s; 
 			continue;
 		} 
 		// Combine sorted group before i
 		if (sl > 0) {
-			sorted[p] = sl; 
+			set_sorted(p, sl);
 			sl = 0;
 		}
 		p = i + 1;
@@ -102,13 +104,13 @@ void sup::sortseq::doubling()
 	uint32 sl = 0; // Sorted groups length following start
 	for (size_t i = 0 ; i < len ; ) {
 		// Skip sorted group
-		if (uint32 s = sorted[i]) {
+		if (uint32 s = get_sorted(i)) {
 			i += s; sl += s;
 			continue;
 		} 
 		// Combine sorted group before i
 		if (sl > 0) {
-			sorted[p] = sl; 
+			set_sorted(p, sl);
 			sl = 0;
 		}
 		// Sort unsorted group i..g
@@ -117,7 +119,7 @@ void sup::sortseq::doubling()
 		p = i = g;
 	}
 	// Combine sorted group at end
-	if (sl > 0) sorted[p] = sl;
+	if (sl > 0) set_sorted(p, sl);
 }
 
 void sup::sortseq::doubling(uint32 p, size_t n)

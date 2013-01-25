@@ -30,7 +30,7 @@ uint32 sup::sortpar::tqsort(uint32 p, size_t n)
 {
 	uint32 a,b,c,d;
 	uint32 pn = p + n;
-	
+
 	// Sort small tables with bingo sort 
 	// Supposedly more efficient than selection sort with duplicate values
 	// Adapted from:
@@ -71,7 +71,7 @@ uint32 sup::sortpar::tqsort(uint32 p, size_t n)
 		}
 		return ns;
 	}
-	
+
 	const uint64 v = choose_pivot(p, n);
 
 	// Partition
@@ -119,22 +119,22 @@ void sup::sortpar::build_lcp()
 	if (!finished_sa) {
 		throw std::runtime_error("suffix array not complete");
 	}
-	
+
 	lcp = new uint32[len];
 	memset(lcp, 0, (len * sizeof(uint32)) );
 
 	// XXX spa lecture10 luentokalvoista
 	/*
-	uint32 l = 0;
-	for (size_t i = 0 ; i < len - 1 ; ++i) {
-		uint32 j = sa[k - 1]; // XXX
-		while (*(text + i + l) == *(text + j + l)) // XXX
-			++l;
-		lcp[ isa[i] ] = l;
-		if (l > 0) --l;
-	}
-	finished_lcp = true;
-	*/
+	   uint32 l = 0;
+	   for (size_t i = 0 ; i < len - 1 ; ++i) {
+	   uint32 j = sa[k - 1]; // XXX
+	   while (*(text + i + l) == *(text + j + l)) // XXX
+	   ++l;
+	   lcp[ isa[i] ] = l;
+	   if (l > 0) --l;
+	   }
+	   finished_lcp = true;
+	 */
 
 }
 
@@ -145,24 +145,27 @@ void sup::sortpar::tccount(uint32 ptext, uint32 n, uint32 * pcount)
 }
 
 void sup::sortpar::tcsort(uint32 ptext, uint32 n, uint32 * pcount,
-		uint32 * group)
+		uint32 * group, uint8 * sorted)
 {
 	uint32 p = 0; // Starting index of sorted group
 	uint32 sl = 0; // Length of sorted groups following p
-	
+
 	for (size_t i = ptext ; i < ptext+n ; ++i) {
+		uint8 c = (uint8)*(text + i);
+		uint32 j = pcount[c]++;
 		// Counting sort f..g
-		sa[ pcount[  (uint8)*(text + i) ]++ ] = i;
+		sa[j] = i;
 		// Sorting key for range f..g is g
-		isa[i] = group[ (uint8)*(text + i) ];
+		isa[i] = group[c];
 		// Increase sorted group length
-		if (uint32 s = sorted[i]) {
+		if (sorted[c]) set_sorted(j, 1);
+		if (uint32 s = get_sorted(j)) {
 			sl += s; 
 			continue;
 		} 
 		// Combine sorted group before i
 		if (sl > 0) {
-			sorted[p] = sl; 
+			set_sorted(p, sl);
 			sl = 0;
 		}
 		p = i + 1;
@@ -186,27 +189,28 @@ void sup::sortpar::init_count(uint32 * tcount, uint32 * count)
 	}
 	tccount_group.join_all();
 
+	// Merge
 	for (size_t i = 0 ; i < (jobs * Alpha) ; ++i)
 		count[i & 0xFF] += tcount[i];
 }
 
-void sup::sortpar::init_sort(uint32 * tcount, uint32 * group)
+void sup::sortpar::init_sort(uint32 * tcount, uint32 * group, uint8 * sorted)
 {
-       boost::thread_group tcsort_group;
-       size_t p = 0;
-       size_t n = len;
+	boost::thread_group tcsort_group;
+	size_t p = 0;
+	size_t n = len;
 
-       for (size_t j = 0 ; j < jobs ; ++j) {
-	       uint32 * pcount = (tcount + (Alpha * j));
+	for (size_t j = 0 ; j < jobs ; ++j) {
+		uint32 * pcount = (tcount + (Alpha * j));
 
-	       tcsort_group.create_thread(
-			       boost::bind(&sup::sortpar::tcsort, this,
-				       p, std::min(n, cakeslice), pcount, group) );
+		tcsort_group.create_thread(
+				boost::bind(&sup::sortpar::tcsort, this,
+					p, std::min(n, cakeslice), pcount, group, sorted) );
 
-	       if (n <= cakeslice) break;
-	       n -= cakeslice; p += cakeslice;
-       }
-       tcsort_group.join_all();
+		if (n <= cakeslice) break;
+		n -= cakeslice; p += cakeslice;
+	}
+	tcsort_group.join_all();
 }
 
 uint32 sup::sortpar::init()
@@ -214,25 +218,26 @@ uint32 sup::sortpar::init()
 	uint32 alphasize = 0;
 	uint32 group[Alpha] = { Z256 };
 	uint32 count[Alpha] = { Z256 };
+	uint8 sorted[Alpha] = { Z256 };
 
 	sa = new uint32[len];
 	isa = new uint32[len];
 	isa_assign = new uint32[len];
-	sorted = new uint32[len];
 
+	// Per thread character counts
 	uint32 * tcount = new uint32[Alpha * jobs];
 
 	memset(sa, 0, (len * sizeof(uint32)) );
 	memset(isa, 0, (len * sizeof(uint32)) );
-	memset(sorted, 0, (len * sizeof(uint32)) );
 	memset(tcount, 0, (Alpha * jobs * sizeof(uint32)) );
 
 	// Count characters
 	init_count(tcount, count);
 
 	// Multiple nulls in input
-	if (count[0] != 1) 
+	if (count[0] != 1) {
 		throw std::runtime_error("input contains multiple nulls");
+	}
 
 	// Assign initial group of each character and build counting sort tables
 	uint32 f = 0; // First index in group
@@ -242,7 +247,7 @@ uint32 sup::sortpar::init()
 		uint32 g = f + n - 1; // Last position in group f..g
 
 		group[i] = g; // Assign group sorting key to last index in f..g
-		groups += sorted[f] = (n == 1); // Singleton group is sorted
+		groups += sorted[i] = (n == 1); // Singleton group is sorted
 
 		// Counting sort starts from f for first and f+tn for following threads
 		tcount[i] = f; 
@@ -258,7 +263,7 @@ uint32 sup::sortpar::init()
 	}
 
 	// Counting sort
-	init_sort(tcount, group);
+	init_sort(tcount, group, sorted);
 
 	// TODO Merge sorted[] at border
 
@@ -273,25 +278,24 @@ void sup::sortpar::doubling(uint32 p, size_t n) {
 	uint32 ns = 0; // New singleton groups g
 	for (size_t i = p ; i < p+n ; ) {
 		// Skip sorted group
-		if (uint32 s = sorted[i]) {
+		if (uint32 s = get_sorted(i)) {
 			i += s; sl += s;
 			continue;
 		} 
 		// Combine sorted group before i
 		if (sl > 0) {
-			sorted[sp] = sl;
+			set_sorted(sp, sl);
 			sl = 0;
 		}
 		// Sort unsorted group i..g
 		uint32 g = isa[ sa[i] ] + 1;
 
-		//tqsort(i, g-i);
 		ns += sort_switch(i, g-i);
 
 		sp = i = g;
 	}
 	// Combine sorted group at end
-	if (sl > 0) sorted[sp] = sl;
+	if (sl > 0) set_sorted(sp, sl);
 
 	groups_lock.lock();
 	groups += ns;
@@ -310,7 +314,7 @@ void sup::sortpar::doubling()
 	// Buckets p..pn
 	for (uint32 pn = BucketSize ; p < len ; p = pn , pn += BucketSize) {
 		if (pn > len - h) pn = len; // End of file
-		else if (!sorted[pn]) pn = isa[ sa[pn] ] + 1; // Last in group
+		else if (!get_sorted(pn)) pn = isa[ sa[pn] ] + 1; // Last in group
 
 		boost::shared_ptr<doubling_task> job(
 				new doubling_task(this, p, (pn-p)));

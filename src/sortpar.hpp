@@ -53,17 +53,17 @@ private:
 	// Share of text length per job
 	const size_t cakeslice;
 
-	// Character count run on one thread
+	// Thread character count
 	void tccount(uint32, uint32, uint32 *);
 
-	// Selection sort run on one thread
-	void tcsort(uint32, uint32, uint32 *, uint32 *);
+	// Thread counting sort
+	void tcsort(uint32, uint32, uint32 *, uint32 *, uint8 *);
 
 	// Parallel character count
 	void init_count(uint32 *, uint32 *);
 
 	// Parallel selection sort
-	void init_sort(uint32 *, uint32 *);
+	void init_sort(uint32 *, uint32 *, uint8 *);
 
 	// Ternary quicksort on items in range p..p+n-1
 	// Returns the count of new singleton groups
@@ -98,10 +98,10 @@ private:
 	{
 		uint32 g = p + n - 1;
 
-		if (n == 1) sorted[p] = 1; // Mark as sorted singleton group
-
 		for (size_t i = p ; i < p+n ; ++i) 
 			isa_assign[ sa[i] ] = g;
+		
+		if (n == 1) set_sorted(p, 1); // Mark as sorted singleton group
 	}
 
 protected:
