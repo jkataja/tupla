@@ -31,25 +31,24 @@ int main(int argc, char** argv) {
 
 	try {
 		std::string jobs_str( boost::str( boost::format(
-			"concurrency level [%1%,%2%]") % JobsMin % JobsMax));
+			"Allow arg sorting threads to run simultaneously [%1%,%2%]") % JobsMin % JobsMax));
 
 		po::options_description visible_opts("Options");
 		visible_opts.add_options()
+			( "benchmark,b", "Do not output file(s)" )
+			( "force,f", "Force overwrite of existing output" )
+			( "help,h", "Show this help and exit" )
 			( "jobs,j",
 			  po::value<uint32>()->default_value(hardware_jobs),
 			  jobs_str.c_str()
 			)
-			( "help,h", "show this help" )
-			( "lcp,l", "compute LCP array as well" )
-			( "force,f", "force overwrite of existing output" )
-			( "validate,v", "validate generated suffix array (slow)" )
-			( "output,o", "print generated suffix array to stderr" )
-			( "benchmark,b", "do not output file(s)" )
+			( "lcp,l", "Compute LCP array as well" )
 			( "count,n", 
-			  po::value<uint32>()->default_value(
-					std::numeric_limits<uint32>::max() - sizeof(uint32)),
-			  "stop processing input after n bytes" 
+			  po::value<uint32>()->default_value(MaxInput, ""),
+			  "Stop processing input after arg bytes" 
 			)
+			( "output,o", "Print generated suffix array to stderr" )
+			( "validate,v", "Validate generated suffix array (slow)" )
 			;
 
 		// TODO accept k and M in count
@@ -107,8 +106,8 @@ int main(int argc, char** argv) {
 		std::string in_name( vm["input-file"].as<std::string>() );
 		// Type limits
 		long in_filesize = stat_filesize(in_name);
-		if ((in_filesize + sizeof(uint32)) >= std::numeric_limits<uint32>::max() ) {
-			std::cerr << SELF << ": input file too large (max 4 GiB)" 
+		if (in_filesize > MaxInput) {
+			std::cerr << SELF << ": input file too large (max 2 GiB)" 
 					<< std::endl << std::flush;
 			return EXIT_FAILURE;
 		}

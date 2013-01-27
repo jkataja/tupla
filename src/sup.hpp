@@ -1,5 +1,5 @@
 /**
- * Common defines and functions for suffix sort.
+ * Common defines and functions for program.
  *
  * @author jkataja
  */
@@ -29,12 +29,14 @@ static const char LCPFileSuffix[] = "lcp";
 // Letters in alphabet
 static const uint32 Alpha = 256;
 
-// Concurrency level 
+// Concurrency level limits
 static const uint32 JobsMin = 1;
 static const uint32 JobsMax = 64;
 
-// Minimum input size for assigning sort to a new thread
-static const uint32 GrainSize = (1 << 14);
+// Maximum input length
+static const size_t MaxInput = 0x7FFFFFFE;
+
+// Minimum input length to assign sort to a new thread
 static const uint32 BucketSize = (1 << 18);
 
 // Get file size
