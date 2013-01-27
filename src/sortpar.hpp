@@ -47,6 +47,9 @@ private:
 	// Share of text length per job
 	const size_t chunk;
 
+	// Longest common prefix for range
+	void lcp_range(uint32 p, uint32 n);
+
 	// Character count for range
 	void count_range(uint32, uint32, uint32 *, uint32);
 

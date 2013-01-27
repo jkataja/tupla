@@ -114,22 +114,27 @@ void sup::sortpar::build_lcp()
 		throw std::runtime_error("suffix array not complete");
 	}
 
+	err << SELF << ": building longest common prefix array" << std::endl;
+	
 	lcp = new uint32[len];
 	memset(lcp, 0, (len * sizeof(uint32)) );
 
-	// XXX spa lecture10 luentokalvoista
-	/*
-	   uint32 l = 0;
-	   for (size_t i = 0 ; i < len - 1 ; ++i) {
-	   uint32 j = sa[k - 1]; // XXX
-	   while (*(text + i + l) == *(text + j + l)) // XXX
-	   ++l;
-	   lcp[ isa[i] ] = l;
-	   if (l > 0) --l;
-	   }
-	   finished_lcp = true;
-	 */
+	parallel_chunk( boost::bind(&sup::sortpar::lcp_range, this, _1, _2) );
+	
+	finished_lcp = true;
 
+}
+
+void sup::sortpar::lcp_range(uint32 p, uint32 n)
+{
+	uint32 l = 0;
+	for (size_t i = p ; i < p+n-1 ; ++i) {
+		uint32 k = isa[i]; 
+		uint32 j = sa[k - 1]; 
+		while (*(text + i + l) == *(text + j + l)) ++l;
+		lcp[k] = l;
+		if (l > 0) --l;
+	}
 }
 
 void sup::sortpar::count_range(uint32 p, uint32 n, uint32 * range_count, 

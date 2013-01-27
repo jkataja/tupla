@@ -19,23 +19,23 @@ void sup::sortseq::build_lcp()
 	if (!finished_sa) {
 		throw std::runtime_error("suffix array not complete");
 	}
+
+	err << SELF << ": building longest common prefix array" << std::endl;
 	
 	lcp = new uint32[len];
 	memset(lcp, 0, (len * sizeof(uint32)) );
 
-	// XXX spa lecture10 luentokalvoista
-	/*
+	// SPA lecture 10
 	uint32 l = 0;
 	for (size_t i = 0 ; i < len - 1 ; ++i) {
-		uint32 j = sa[k - 1]; // XXX
-		while (*(text + i + l) == *(text + j + l)) // XXX
-			++l;
-		lcp[ isa[i] ] = l;
+		uint32 k = isa[i]; 
+		uint32 j = sa[k - 1]; 
+		while (*(text + i + l) == *(text + j + l)) ++l;
+		lcp[k] = l;
 		if (l > 0) --l;
 	}
-	finished_lcp = true;
-	*/
 
+	finished_lcp = true;
 }
 
 uint32 sup::sortseq::init()

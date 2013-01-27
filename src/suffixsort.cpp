@@ -64,6 +64,7 @@ void sup::suffixsort::run()
 	}
 
 	// Invert inverse suffix array
+	err << SELF << ": inverting suffix array" << std::endl;
 	invert();
 
 	finished_sa = true;
@@ -182,13 +183,39 @@ bool sup::suffixsort::out_descending()
 			std::replace( a.begin(), a.end(), '\t', '#');
 			std::replace( b.begin(), b.end(), '\n', '#');
 			std::replace( b.begin(), b.end(), '\t', '#');
-			err << SELF << ": line " << (i-1) << ": "<< a << std::endl;
-			err << SELF << ": line " << (i) << ": "<< b << std::endl;
+			err << SELF << ": at " << (i-1) << ": "<< a << std::endl;
+			err << SELF << ": at " << (i) << ": "<< b << std::endl;
 			++descending;
 		}
 	}
-	err << SELF << ": found " << descending << " pairs of suffixes in descending order" << std::endl;
+	err << SELF << ": found " << descending << " text positions with following suffix in descending order" << std::endl;
 	return (descending > 0);
+}
+
+bool sup::suffixsort::out_incorrect_lcp()
+{
+	uint32 nomatch = 0;
+	for (size_t i = 1 ; i<len ; ++i) {
+		if ( (strncmp((text+sa[i]), (text + sa[i-1]), lcp[i]) != 0)
+					&& *(text + sa[i] + lcp[i] + 1) == 
+					   *(text + sa[i-1] + lcp[i] + 1) ) {
+			std::string a( (text + sa[i]) );
+			std::string b( (text + sa[i-1]) );
+			a.append("$"); b.append("$");
+			if (a.length() > 72) a.erase(72);
+			if (b.length() > 72) b.erase(72);
+			std::replace( a.begin(), a.end(), '\n', '#');
+			std::replace( a.begin(), a.end(), '\t', '#');
+			std::replace( b.begin(), b.end(), '\n', '#');
+			std::replace( b.begin(), b.end(), '\t', '#');
+			err << SELF << ": at "<< (i) << " lcp " << lcp[i] << std::endl;
+			err << SELF << ": '" << a << "'" << std::endl;
+			err << SELF << ": '" << b << "'" << std::endl;
+			++nomatch;
+		}
+	}
+	err << SELF << ": found " << nomatch << " text positions where longest common prefix is not matching text" << std::endl;
+	return (nomatch > 0);
 }
 
 uint32 sup::suffixsort::count_dupes()
@@ -202,24 +229,9 @@ uint32 sup::suffixsort::count_dupes()
 	return dupes;
 }
 
-void sup::suffixsort::out_sa(uint32 p, size_t n)
-{
-	err << "i\tsa[i]\torder            suffix" << std::endl;
-	for (size_t i = p ; i<p+n ; ++i)  {
-		std::string str( (text + sa[i]) );
-		str.append("$");
-		if (str.length() > 36) str.erase(36);
-		std::replace( str.begin(), str.end(), '\n', '#');
-		std::replace( str.begin(), str.end(), '\t', '#');
-		err << std::hex << i << "\t"  << sa[i] << "\t"  
-			<< std::setw(16) << std::setfill('0') << k(i) << std::dec;
-		err << " '" << str << "'" << std::endl;
-	}
-}
-
 void sup::suffixsort::out_sa()
 {
-	err << "i\tsa[i]\torder            suffix" << std::endl;
+	err << "i       sa[i]   order            suffix" << std::endl;
 	for (size_t i = 0 ; i<len ; ++i)  {
 		if (get_sorted(i)) {
 			err << std::hex << i << std::dec << "\t"  
@@ -238,6 +250,23 @@ void sup::suffixsort::out_sa()
 	}
 }
 
+void sup::suffixsort::out_lcp()
+{
+	if (!finished_lcp) return;
+	err << "i       sa[i]   order            lcp[i] suffix" << std::endl;
+	for (size_t i = 0 ; i<len ; ++i)  {
+		std::string str( (text + sa[i]) );
+		str.append("$");
+		if (str.length() > 37) str.erase(37);
+		std::replace( str.begin(), str.end(), '\n', '#');
+		std::replace( str.begin(), str.end(), '\t', '#');
+		err << std::hex << i << "\t"  << sa[i] << "\t"  
+			<< std::hex << std::setw(16) << std::setfill('0') << k(i) 
+			<< std::dec << " " << std::setw(6) << std::setfill(' ') << lcp[i] 
+			<< " '" << str << "'" << std::endl;
+	}
+}
+
 bool sup::suffixsort::out_validate()
 {
 	if (!finished_sa) {
@@ -246,16 +275,13 @@ bool sup::suffixsort::out_validate()
 	}
 
 	uint32 dupes = count_dupes();
-	if (dupes > 0) err << SELF << ": found " << dupes 
-			<< " duplicates suffixes in ISA" << std::endl;
 
 	out_descending();
 
-	if (finished_lcp) {
-		// TODO LCP vs strncmp
-	}
+	uint32 nomatch = 0;
+	if (finished_lcp) nomatch = out_incorrect_lcp();
 
-	return (dupes == 0);
+	return (dupes == 0 && nomatch == 0);
 }
 
 // vim:set ts=4 sts=4 sw=4 noexpandtab:

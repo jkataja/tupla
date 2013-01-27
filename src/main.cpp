@@ -140,7 +140,8 @@ int main(int argc, char** argv) {
 
 		// Output completed suffix array
 		if (vm.count("output")) {
-			sorter->out_sa();
+			if (vm.count("lcp")) sorter->out_lcp();
+			else sorter->out_sa();
 		}
 
 		// Output suffix array to file

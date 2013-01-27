@@ -62,7 +62,6 @@ protected:
 	virtual void invert() = 0;
 
 	// Debugging and testing
-	void out_sa(uint32, size_t);
 	bool out_descending();
 	uint32 count_dupes();
 
@@ -169,9 +168,15 @@ public:
 
 	// Output generated SA
 	virtual void out_sa();
+	
+	// Output generated LCP
+	virtual void out_lcp();
 
-	// Run crossstrcmp all following suffixes
+	// Compare strings on all following suffixes
 	virtual bool out_validate();
+
+	// Compare all LCP matching to text
+	virtual bool out_incorrect_lcp();
 
 	// Access the class internal SA
 	virtual const uint32 * const get_sa();
