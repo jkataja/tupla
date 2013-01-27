@@ -1,7 +1,5 @@
 /**
- * Doubling suffix sort. Sequential algorithm using ternary split quick sort. 
- * Requires 12n memory compared to 8n for Larsson & Sadakane implementation, 
- * but finished suffix array is readily accessible without inverting ISA.
+ * Doubling suffix sort. Sequential implementation. Requires 8n memory.
  *
  * Impelements prefix doubling as described in:
  * N. Jesper Larsson & Kunihiko Sadakane: Faster Suffix Sorting

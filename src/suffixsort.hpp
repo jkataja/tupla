@@ -1,7 +1,5 @@
 /**
- * Doubling suffix sort. Sequential algorithm using ternary split quick sort. 
- * Requires 12n memory compared to 8n for Larsson & Sadakane implementation, 
- * but finished suffix array is readily accessible without inverting ISA.
+ * Doubling suffix sort using ternary split quick sort. 
  *
  * Impelements prefix doubling as described in:
  * N. Jesper Larsson & Kunihiko Sadakane: Faster Suffix Sorting
@@ -34,15 +32,15 @@ private:
 	suffixsort& operator=(const suffixsort&);
 
 protected:
-	uint32 * sa;  // Suffixes in lexicographical h-order 
-	uint32 * isa; // h-order keys of the suffix starting from i
+	uint32 * sa;  // Suffixes sorted in lexicographical h-order
+	uint32 * isa; // Sorting h-order of the suffixes
 	uint32 * lcp; // LCP built from completed suffix array
 
 	size_t h; // Current suffix doubling distance
 
 	const char * const text; // Input
 	const uint32 len; // Length of input
-	uint32 groups; // Singleton groups
+	uint32 groups; // Count of singleton groups
 
 	std::ostream& err; // Error stream
 
@@ -85,7 +83,7 @@ protected:
 	}
 
 	// Choose pivot value from n elements starting at p using pseudomedian
-	// Returns pivot ( ISA_h[ SA_h[pivot] ] , ISA_h[ SA_h[pivot] + h ] ) 
+	// Returns value ( ISA_h[ SA_h[pivot] ] , ISA_h[ SA_h[pivot] + h ] ) 
 	// Based on Bentley-McIlroy 1993: Engineering a Sort Function
 	inline uint64 choose_pivot(uint32 p, size_t n)
 	{
@@ -105,11 +103,10 @@ protected:
 	}
 
 	// Comparison key for index p in suffix array
-	// Returns pair ( ISA_h[ SA_h[p] ] , ISA_h[ SA_h[p] + h] ) packed in long
+	// Returns pair ( ISA_h[ SA_h[p] ] , ISA_h[ SA_h[p] + h ] ) packed in long
 	inline uint64 k(const uint32 p)
 	{
 		uint32 v = sa[p];
-		if (v<0) {std::cerr<<"k("<<p<<")"<<std::endl;}
 
 		return (v + h < len 
 				? (((uint64)isa[ v ] << 32) | isa[ v + h ] )
@@ -144,7 +141,6 @@ protected:
 	// First byte set in suffix array sets sorted flag
 	inline void set_sorted(uint32 p, uint32 n)
 	{
-		//sa[p] = -n;
 		sa[p] = (0x80000000U ^ n);
 		
 	}
@@ -152,8 +148,6 @@ protected:
 	// Length of sorted group starting from p
 	inline uint32 get_sorted(uint32 p)
 	{
-		//int32 v = sa[p];
-		//return (v < 0 ? -v : 0);
 		uint32 v = sa[p];
 		return ((v >> 31) ? (0x7FFFFFFFU & v) : 0); 
 		

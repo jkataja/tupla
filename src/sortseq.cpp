@@ -2,9 +2,6 @@
 #include "sup.hpp"
 
 #include <stdexcept>
-#include <iomanip>
-#include <algorithm>
-#include <cstring>
 
 using namespace sup;
 
@@ -62,25 +59,26 @@ uint32 sup::sortseq::init()
 	if (count[0] != 1) 
 		throw std::runtime_error("input contains multiple nulls");
 
-	// Starting index of each sorting group f..g
+	// Assign prefix sums for each character
 	uint32 f = 0; // First index in group
 	for (size_t i = 0 ; i < Alpha ; ++i) {
 		uint32 n = count[i]; 
 		uint32 g = f + n - 1; // Last position in group f..g
-		count[i] = f; // Starting counting sort from f
-		group[i] = g; // Sorting group key 
-		groups += sorted[i] = (n == 1); // Singleton group
+		count[i] = f; // Prefix starts from f
+		group[i] = g; // Group sorting key is last index in f..g
+		groups += sorted[i] = (n == 1); // Singleton group is sorted
 		f += n;
 		alphasize += (n > 0);
 	}
+	// Assign initial sorting groups and build prefix sums
 	uint32 p = 0; // Starting index of sorted group
 	uint32 sl = 0; // Length of sorted groups following p
 	for (size_t i = 0 ; i < len ; ++i) {
 		uint8 c = (uint8)*(text + i);
 		uint32 j = count[ c ]++;
-		// Counting sort f..g
+		// Initialize suffix array with counting sort 
 		sa[j] = i;
-		// Sorting key for range f..g is g
+		// Initialize inverse suffix array with group sorting key
 		isa[i] = group[c];
 		// Increase sorted group length
 		if (sorted[c]) set_sorted(j, 1);
