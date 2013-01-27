@@ -1,8 +1,5 @@
 /**
- * Doubling suffix sort. Parallel algorithm. 
- *
- * Requires 12n memory compared to 8n for Larsson & Sadakane implementation, 
- * but finished suffix array is readily accessible without inverting ISA.
+ * Doubling suffix sort. Parallel implementation. Requires 12n memory.
  *
  * Impelements prefix doubling as described in:
  * N. Jesper Larsson & Kunihiko Sadakane: Faster Suffix Sorting
@@ -17,11 +14,8 @@
 
 #pragma once
 
-#include <iostream>
-#include <boost/cstdint.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/threadpool.hpp>
-#include <boost/thread/thread.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
 
 #include "numdefs.hpp"
@@ -51,19 +45,31 @@ private:
 	const uint32 jobs;
 
 	// Share of text length per job
-	const size_t cakeslice;
+	const size_t chunk;
 
-	// Thread character count
-	void tccount(uint32, uint32, uint32 *);
+	// Character count for range
+	void count_range(uint32, uint32, uint32 *, uint32);
 
-	// Thread counting sort
-	void tcsort(uint32, uint32, uint32 *, uint32 *, uint8 *);
+	// Counting sort for range
+	void sort_range(uint32, uint32, uint32 *, uint32 *, uint8 *, uint32);
 
-	// Parallel character count
-	void init_count(uint32 *, uint32 *);
+	// Invoke function parallel for each thread's range in input
+	template <class F>
+	void parallel_chunk(F fun_range)
+	{
+		boost::thread_group threads;
+		size_t p = 0;
+		size_t n = len;
 
-	// Parallel selection sort
-	void init_sort(uint32 *, uint32 *, uint8 *);
+		for (size_t j = 0 ; j < jobs ; ++j) {
+			threads.create_thread( 
+					boost::bind(fun_range, p, std::min(n, chunk), j) );
+
+			if (n <= chunk) break;
+			n -= chunk; p += chunk;
+		}
+		threads.join_all();
+	}
 
 	// Ternary quicksort on items in range p..p+n-1
 	// Returns the count of new singleton groups
