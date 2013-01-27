@@ -53,6 +53,9 @@ private:
 	// Counting sort for range
 	void sort_range(uint32, uint32, uint32 *, uint32 *, uint8 *, uint32);
 
+	// Reconstruct suffix array from inverse suffix array
+	void invert_range(uint32, uint32);
+
 	// Invoke function parallel for each thread's range in input
 	template <class F>
 	void parallel_chunk(F fun_range)
@@ -113,6 +116,7 @@ private:
 protected:
 	virtual uint32 init();
 
+	virtual void invert();
 	virtual void doubling();
 	virtual void doubling(uint32, size_t);
 

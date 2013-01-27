@@ -140,35 +140,29 @@ void sup::sortpar::count_range(uint32 p, uint32 n, uint32 * range_count,
 		++task_count[  (uint8)*(text + i) ];
 }
 
-void sup::sortpar::sort_range(uint32 ptext, uint32 n, uint32 * range_count,
+void sup::sortpar::sort_range(uint32 p, uint32 n, uint32 * range_count,
 		uint32 * group, uint8 * sorted, uint32 j)
 {
 	uint32 * task_count = (range_count + (j * Alpha));
 
-	uint32 p = 0; // Starting index of sorted group
-	uint32 sl = 0; // Length of sorted groups following p
-
-	for (size_t i = ptext ; i < ptext+n ; ++i) {
+	for (size_t i = p ; i < p+n ; ++i) {
 		uint8 c = (uint8)*(text + i);
 		uint32 j = task_count[c]++;
 		// Initialize suffix array with counting sort 
 		sa[j] = i;
 		// Initialize inverse suffix array with group sorting key
 		isa[i] = group[c];
-		// Increase sorted group length
+		// Set singleton group as sorted (overwriting sa[j])
 		if (sorted[c]) set_sorted(j, 1);
-		if (uint32 s = get_sorted(j)) {
-			sl += s; 
-			continue;
-		} 
-		// Combine sorted group before i
-		if (sl > 0) {
-			set_sorted(p, sl);
-			sl = 0;
-		}
-		p = i + 1;
 	}
 }
+
+void sup::sortpar::invert_range(uint32 p, uint32 n)
+{
+	for (size_t i = p ; i<p+n ; ++i)
+		sa[ isa[i] ] = i;
+}
+
 
 uint32 sup::sortpar::init()
 {
@@ -262,6 +256,11 @@ void sup::sortpar::doubling(uint32 p, size_t n) {
 	groups_lock.lock();
 	groups += ns;
 	groups_lock.unlock();
+}
+
+void sup::sortpar::invert()
+{
+	parallel_chunk( boost::bind(&sup::sortpar::invert_range, this, _1, _2) ); 
 }
 
 void sup::sortpar::doubling()

@@ -58,11 +58,13 @@ protected:
 	virtual void doubling() = 0;
 	virtual void doubling(uint32, size_t) = 0;
 
+	// Reconstruct suffix array from inverse suffix array
+	virtual void invert() = 0;
+
 	// Debugging and testing
 	void out_sa(uint32, size_t);
 	bool out_descending();
 	uint32 count_dupes();
-	bool is_xvalid();
 
 	// Sort range using ternary split quick sort
 	// Based on Bentley-McIlroy 1993: Engineering a Sort Function
@@ -168,7 +170,7 @@ public:
 	// Output generated SA
 	virtual void out_sa();
 
-	// Run cross-validation on SA vs ISA and strcmp all following suffixes
+	// Run crossstrcmp all following suffixes
 	virtual bool out_validate();
 
 	// Access the class internal SA

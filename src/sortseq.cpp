@@ -71,8 +71,6 @@ uint32 sup::sortseq::init()
 		alphasize += (n > 0);
 	}
 	// Assign initial sorting groups and build prefix sums
-	uint32 p = 0; // Starting index of sorted group
-	uint32 sl = 0; // Length of sorted groups following p
 	for (size_t i = 0 ; i < len ; ++i) {
 		uint8 c = (uint8)*(text + i);
 		uint32 j = count[ c ]++;
@@ -80,18 +78,8 @@ uint32 sup::sortseq::init()
 		sa[j] = i;
 		// Initialize inverse suffix array with group sorting key
 		isa[i] = group[c];
-		// Increase sorted group length
+		// Mark singleton group as sorted
 		if (sorted[c]) set_sorted(j, 1);
-		if (uint32 s = get_sorted(j)) {
-			sl += s; 
-			continue;
-		} 
-		// Combine sorted group before i
-		if (sl > 0) {
-			set_sorted(p, sl);
-			sl = 0;
-		}
-		p = i + 1;
 	}
 	return alphasize;
 }
@@ -124,5 +112,12 @@ void sup::sortseq::doubling(uint32 p, size_t n)
 {
 	throw std::runtime_error("not implemented");
 }
+
+void sup::sortseq::invert()
+{
+	for (size_t i = 0 ; i<len ; ++i)
+		sa[ isa[i] ] = i;
+}
+
 
 // vim:set ts=4 sts=4 sw=4 noexpandtab:

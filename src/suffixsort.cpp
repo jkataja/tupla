@@ -63,6 +63,9 @@ void sup::suffixsort::run()
 		throw std::runtime_error("could not find singleton groups for all suffixes");
 	}
 
+	// Invert inverse suffix array
+	invert();
+
 	finished_sa = true;
 }
 
@@ -165,13 +168,6 @@ const uint32 * const sup::suffixsort::get_lcp()
 	return (finished_lcp ? lcp : 0);
 }
 
-bool sup::suffixsort::is_xvalid()
-{
-	for (size_t i = 0 ; i<len ; ++i)
-		if (isa[ sa[i] ] != i) return false;
-	return true;
-}
-
 bool sup::suffixsort::out_descending()
 {
 	uint32 descending = 0;
@@ -236,7 +232,6 @@ void sup::suffixsort::out_sa()
 			std::replace( str.begin(), str.end(), '\n', '#');
 			std::replace( str.begin(), str.end(), '\t', '#');
 			err << std::hex << i << "\t"  << sa[i] << "\t"  
-				<< std::dec << get_sorted(i) << "\t" 
 				<< std::hex << std::setw(16) << std::setfill('0') << k(i) 
 				<< std::dec << " '" << str << "'" << std::endl;
 		}
@@ -254,16 +249,13 @@ bool sup::suffixsort::out_validate()
 	if (dupes > 0) err << SELF << ": found " << dupes 
 			<< " duplicates suffixes in ISA" << std::endl;
 
-	bool eq = is_xvalid();
-	if (!eq) err << SELF << ": final SA and ISA do not match" << std::endl;
-
 	out_descending();
 
 	if (finished_lcp) {
 		// TODO LCP vs strncmp
 	}
 
-	return (dupes == 0 && eq);
+	return (dupes == 0);
 }
 
 // vim:set ts=4 sts=4 sw=4 noexpandtab:
