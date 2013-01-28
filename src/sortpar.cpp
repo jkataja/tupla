@@ -1,7 +1,6 @@
 #include <boost/threadpool.hpp>
 #include <boost/bind.hpp>
 
-#include "suffixsort.hpp"
 #include "sortpar.hpp"
 #include "sup.hpp"
 #include "tqsort_task.hpp"
@@ -11,13 +10,14 @@ using namespace sup;
 
 sup::sortpar::sortpar(const char * text, const uint32 len, const uint32 jobs,
 		std::ostream& err)
-	: suffixsort(text, len, err), jobs(jobs), 
+	: suffixsort(text, len, err), isa_assign(0), jobs(jobs), 
 	  chunk( std::min( std::max(BucketSize, (len/jobs) + 1) , len) )
 {
 }
 
 sup::sortpar::~sortpar()
 {
+	delete [] isa_assign;
 }
 
 uint32 sup::sortpar::tqsort(uint32 p, size_t n)
@@ -125,53 +125,8 @@ void sup::sortpar::build_lcp()
 
 }
 
-void sup::sortpar::lcp_range(uint32 p, uint32 n)
-{
-	uint32 l = 0;
-	for (size_t i = p ; i < p+n-1 ; ++i) {
-		uint32 k = isa[i]; 
-		uint32 j = sa[k - 1]; 
-		while (*(text + i + l) == *(text + j + l)) ++l;
-		lcp[k] = l;
-		if (l > 0) --l;
-	}
-}
-
-void sup::sortpar::count_range(uint32 p, uint32 n, uint32 * range_count, 
-		uint32 j)
-{
-	uint32 * task_count = (range_count + (j * Alpha));
-	for (size_t i = p ; i < p+n ; ++i) 
-		++task_count[  (uint8)*(text + i) ];
-}
-
-void sup::sortpar::sort_range(uint32 p, uint32 n, uint32 * range_count,
-		uint32 * group, uint8 * sorted, uint32 j)
-{
-	uint32 * task_count = (range_count + (j * Alpha));
-
-	for (size_t i = p ; i < p+n ; ++i) {
-		uint8 c = (uint8)*(text + i);
-		uint32 j = task_count[c]++;
-		// Initialize suffix array with counting sort 
-		sa[j] = i;
-		// Initialize inverse suffix array with group sorting key
-		isa[i] = group[c];
-		// Set singleton group as sorted (overwriting sa[j])
-		if (sorted[c]) set_sorted(j, 1);
-	}
-}
-
-void sup::sortpar::invert_range(uint32 p, uint32 n)
-{
-	for (size_t i = p ; i<p+n ; ++i)
-		sa[ isa[i] ] = i;
-}
-
-
 uint32 sup::sortpar::init()
 {
-	uint32 alphasize = 0;
 	uint32 group[Alpha] = { Z256 };
 	uint32 count[Alpha] = { Z256 };
 	uint8 sorted[Alpha] = { Z256 };
@@ -188,45 +143,21 @@ uint32 sup::sortpar::init()
 	memset(range_count, 0, (Alpha * jobs * sizeof(uint32)) );
 
 	// Count characters and merge
-	parallel_chunk( boost::bind(&sup::sortpar::count_range, this, 
-			_1, _2, range_count, _3) );
+	parallel_chunk( boost::bind(&sup::sortpar::count_range, 
+			this, _1, _2, range_count, _3) );
 	for (size_t i = 0 ; i < (jobs * Alpha) ; ++i)
 		count[i & 0xFF] += range_count[i];
 
 	// Multiple nulls in input
-	if (count[0] != 1) {
+	if (count[0] != 1) 
 		throw std::runtime_error("input contains multiple nulls");
-	}
 
 	// Assign initial sorting groups and build prefix sums
-	uint32 f = 0; // First index in group
-	for (size_t i = 0 ; i < Alpha ; ++i) {
-		uint32 n = count[i];
-		uint32 tn = range_count[i]; // Count in thread range of text
-		uint32 g = f + n - 1; // Last position in group f..g
+	uint32 alphasize = build_prefix(count, range_count, group, sorted, jobs);
 
-		group[i] = g; // Assign group sorting key to last index in f..g
-		groups += sorted[i] = (n == 1); // Singleton group is sorted
-
-		// Add offset to count array after each thread
-		// Prefix sum starts from f for first and f+tn for following threads
-		range_count[i] = f; 
-		for (size_t j = 1 ; j < jobs ; ++j) {
-			uint32 tin = range_count[(j * Alpha) + i];
-			range_count[(j * Alpha) + i] = f + tn;
-			tn += tin;
-		}
-
-		f += n;
-
-		alphasize += (n > 0);
-	}
-
-	// Counting sort
-	parallel_chunk( boost::bind(&sup::sortpar::sort_range, this,
-			_1, _2, range_count, group, sorted, _3) ); 
-
-	// TODO Merge sorted[] at border
+	// Counting sort on first character of suffix
+	parallel_chunk( boost::bind(&sup::sortpar::sort_range, 
+			this, _1, _2, range_count, group, sorted, _3) ); 
 
 	delete [] range_count;
 

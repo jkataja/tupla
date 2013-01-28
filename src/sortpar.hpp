@@ -47,18 +47,6 @@ private:
 	// Share of text length per job
 	const size_t chunk;
 
-	// Longest common prefix for range
-	void lcp_range(uint32 p, uint32 n);
-
-	// Character count for range
-	void count_range(uint32, uint32, uint32 *, uint32);
-
-	// Counting sort for range
-	void sort_range(uint32, uint32, uint32 *, uint32 *, uint8 *, uint32);
-
-	// Reconstruct suffix array from inverse suffix array
-	void invert_range(uint32, uint32);
-
 	// Invoke function parallel for each thread's range in input
 	template <class F>
 	void parallel_chunk(F fun_range)

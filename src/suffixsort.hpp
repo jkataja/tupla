@@ -58,6 +58,21 @@ protected:
 	virtual void doubling() = 0;
 	virtual void doubling(uint32, size_t) = 0;
 
+	// Longest common prefix for range
+	void lcp_range(uint32 p, uint32 n);
+
+	// Character count for range
+	void count_range(uint32, uint32, uint32 *, uint32);
+
+	// Build prefix sums for counting sort
+	const uint32 build_prefix(uint32 *, uint32 *, uint32 *, uint8 *, uint32);
+
+	// Counting sort for range
+	void sort_range(uint32, uint32, uint32 *, uint32 *, uint8 *, uint32);
+
+	// Reconstruct suffix array from inverse suffix array
+	void invert_range(uint32, uint32);
+
 	// Reconstruct suffix array from inverse suffix array
 	virtual void invert() = 0;
 

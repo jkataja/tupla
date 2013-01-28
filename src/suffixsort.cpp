@@ -159,6 +159,80 @@ uint32 sup::suffixsort::tqsort(uint32 p, size_t n)
 	return (lts + (eqn == 1) + gts);
 }
 
+void sup::suffixsort::lcp_range(uint32 p, uint32 n)
+{
+	uint32 l = 0;
+	for (size_t i = p ; i < p+n-1 ; ++i) {
+		uint32 k = isa[i];
+		uint32 j = sa[k - 1];
+		while (*(text + i + l) == *(text + j + l)) ++l;
+		lcp[k] = l;
+		if (l > 0) --l;
+	}
+}
+
+void sup::suffixsort::count_range(uint32 p, uint32 n, uint32 * range_count, 
+		uint32 j)
+{
+	uint32 * task_count = (range_count + (j * Alpha));
+	for (size_t i = p ; i < p+n ; ++i) 
+		++task_count[  (uint8)*(text + i) ];
+}
+
+const uint32 sup::suffixsort::build_prefix(uint32 * count, 
+	uint32 * range_count, uint32 * group, uint8 * sorted, uint32 jobs)
+{
+	uint32 alphasize = 0;
+
+	// Assign initial sorting groups and build prefix sums
+	uint32 f = 0; // First index in group
+	for (size_t i = 0 ; i < Alpha ; ++i) {
+		uint32 n = count[i];
+		uint32 tn = range_count[i]; // Count in thread range of text
+		uint32 g = f + n - 1; // Last position in group f..g
+
+		group[i] = g; // Assign group sorting key to last index in f..g
+		groups += sorted[i] = (n == 1); // Singleton group is sorted
+
+		// Add offset to count array after each thread
+		// Prefix sum starts from f for first and f+tn for following threads
+		range_count[i] = f; 
+		for (size_t j = 1 ; j < jobs ; ++j) {
+			uint32 tin = range_count[(j * Alpha) + i];
+			range_count[(j * Alpha) + i] = f + tn;
+			tn += tin;
+		}
+
+		f += n;
+
+		alphasize += (n > 0);
+	}
+	return alphasize;
+}
+
+void sup::suffixsort::sort_range(uint32 p, uint32 n, uint32 * range_count,
+		uint32 * group, uint8 * sorted, uint32 j)
+{
+	uint32 * task_count = (range_count + (j * Alpha));
+
+	for (size_t i = p ; i < p+n ; ++i) {
+		uint8 c = (uint8)*(text + i);
+		uint32 j = task_count[c]++;
+		// Initialize suffix array with counting sort 
+		sa[j] = i;
+		// Initialize inverse suffix array with group sorting key
+		isa[i] = group[c];
+		// Set singleton group as sorted (overwriting sa[j])
+		if (sorted[c]) set_sorted(j, 1);
+	}
+}
+
+void sup::suffixsort::invert_range(uint32 p, uint32 n)
+{
+	for (size_t i = p ; i<p+n ; ++i)
+		sa[ isa[i] ] = i;
+}
+
 const uint32 * const sup::suffixsort::get_sa()
 {
 	return (finished_sa ? sa : 0);
