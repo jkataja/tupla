@@ -53,11 +53,20 @@ bool has_sa_unique(const uint32 * const sa, uint32 len)
 	return ( dupes == 0 );
 }
 
+// SA and ISA match
+bool is_xvalid(const uint32 * const sa, const uint32 * const isa, uint32 len)
+{
+	for (size_t i = 0 ; i<len ; ++i)
+		if (isa[ sa[i] ] != i) return false;
+	return true;
+}
+
 // Suffixes in ascending order
 bool is_ascending(const uint32 * const sa, const char * text, uint32 len)
 {
 	for (size_t i = 1 ; i<len ; ++i) {
-		if (strncmp((text+sa[i]), (text + sa[i-1]), len-i) < 0) {
+		if (memcmp((text+sa[i]), (text + sa[i-1]), len-sa[i]) < 0) {
+			std::cerr << "SA not in ascending order at " << i << std::endl;
 			return false;
 		}
 	}
@@ -69,9 +78,8 @@ bool has_correct_lcp(const uint32 * const sa, const uint32 * const lcp,
 		const char * text, uint32 len)
 {
 	for (size_t i = 1 ; i<len ; ++i) {
-		if ( (strncmp((text+sa[i]), (text + sa[i-1]), lcp[i]) != 0)
-					&& *(text + sa[i] + lcp[i] + 1) == 
-					   *(text + sa[i-1] + lcp[i] + 1) ) {
+		if (memcmp((text+sa[i]), (text + sa[i-1]), lcp[i]) != 0) {
+			std::cerr << "LCP does not match text at " << i << std::endl;
 			return false;
 		}
 	}
@@ -96,17 +104,19 @@ void run_sorter(std::string& in_name, uint32 jobs,
 	sorter->build_sa();
 
 	const uint32 * const sa = sorter->get_sa();
+	const uint32 * const isa = sorter->get_isa();
 
 	BOOST_CHECK( has_sa_range(sa, len_eof) );
 	BOOST_CHECK( has_sa_unique(sa, len_eof) );
 	BOOST_CHECK( has_sa_terminator(sa, len_eof) );
-	BOOST_CHECK( is_ascending(sa, text_eof, len) );
+	BOOST_CHECK( is_ascending(sa, text_eof, len_eof) );
+	BOOST_CHECK( is_xvalid(sa, isa, len_eof) );
 
 	sorter->build_lcp();
 	
 	const uint32 * const lcp = sorter->get_lcp();
 	
-	BOOST_CHECK( has_correct_lcp(sa, lcp, text_eof, len) );
+	BOOST_CHECK( has_correct_lcp(sa, lcp, text_eof, len_eof) );
 
 	delete [] text_eof;
 }
@@ -142,8 +152,8 @@ BOOST_AUTO_TEST_CASE( read_binary )
 
 BOOST_AUTO_TEST_CASE( run_test_files_limited ) 
 {
-	for (int jobs = 1 ; jobs <= 8 ; jobs <<= 1) {
-		for (auto filename : test_files) {
+	for (auto filename : test_files) {
+		for (int jobs = 1 ; jobs <= 8 ; jobs <<= 1) {
 			std::cerr << "Running test with '" << filename 
 					<< "' (1 MB) " << jobs << " threads" << std::endl;
 			run_sorter(filename, jobs, (1 << 20));

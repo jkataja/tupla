@@ -181,6 +181,9 @@ public:
 	// Access the class internal SA
 	virtual const uint32 * const get_sa();
 
+	// Access the class internal ISA
+	virtual const uint32 * const get_isa();
+
 	// Access the class internal LCP array
 	virtual const uint32 * const get_lcp();
 
