@@ -14,3 +14,7 @@ Workaround:
 Build Boost static libraries with gcc-mp-4.6
 http://lists.macosforge.org/pipermail/macports-users/2011-November/026364.html
 
+
+
+2.
+Replace boost::threadpool with io_service and packaged_task
