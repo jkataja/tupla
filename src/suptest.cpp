@@ -10,7 +10,13 @@
 
 using namespace sup;
 
-static uint32 banana_sa[] = { 6, 5, 3, 1, 0, 4, 2 };
+std::vector<std::string> test_files = { 
+	"data/trivial/banana",
+	"data/artificial/fib41", 
+	"data/largetext/enwik8", 
+	"data/pseudo-real/dblp.xml.50MB", 
+};
+
 
 // First element in suffix array is terminator
 bool has_sa_terminator(const uint32 * const sa, uint32 len)
@@ -47,65 +53,66 @@ bool has_sa_unique(const uint32 * const sa, uint32 len)
 	return ( dupes == 0 );
 }
 
-// Run sequential algorithm for input and compare result to expected
-void run_sequential(const std::string& in_name, uint32 * expect)
+// Suffixes in ascending order
+bool is_ascending(const uint32 * const sa, const char * text, uint32 len)
 {
-	long in_filesize = stat_filesize(in_name);
-	BOOST_CHECK( in_filesize != -1 );
+	for (size_t i = 1 ; i<len ; ++i) {
+		if (strncmp((text+sa[i]), (text + sa[i-1]), len-i) < 0) {
+			return false;
+		}
+	}
+	return true;
+}
 
-	uint32 len = (uint32)in_filesize;
-	uint32 len_eof = len + 1;
-	char * text_eof = (char *)read_byte_string(in_name, len);
-
-	std::unique_ptr<suffixsort> sorter( suffixsort::instance( text_eof,
-			len_eof, 1, std::cerr) );
-
-	sorter->run();
-
-	const uint32 * const sa = sorter->get_sa();
-
-	BOOST_CHECK( has_sa_range(sa, len_eof) );
-	BOOST_CHECK( has_sa_unique(sa, len_eof) );
-	BOOST_CHECK( has_sa_terminator(sa, len_eof) );
-	BOOST_CHECK( has_sa_equal(sa, expect, len_eof) );
-
-	delete [] text_eof;
+// Common prefix part matches and first character after is different
+bool has_correct_lcp(const uint32 * const sa, const uint32 * const lcp, 
+		const char * text, uint32 len)
+{
+	for (size_t i = 1 ; i<len ; ++i) {
+		if ( (strncmp((text+sa[i]), (text + sa[i-1]), lcp[i]) != 0)
+					&& *(text + sa[i] + lcp[i] + 1) == 
+					   *(text + sa[i-1] + lcp[i] + 1) ) {
+			return false;
+		}
+	}
+	return true;
 }
 
 // Run parallel algorithm for input and compare result to expected
-void run_parallel(std::string& in_name, uint32 * expect,
-		uint32 jobs)
+void run_sorter(std::string& in_name, uint32 jobs, 
+		const uint32 cap = 0x7FFFFFFE)
 {
 	long in_filesize = stat_filesize(in_name);
 	BOOST_CHECK( in_filesize != -1 );
 
 	uint32 len = (uint32)in_filesize;
+	len = std::min(len, cap);
 	uint32 len_eof = len + 1;
 	char * text_eof = (char *)read_byte_string(in_name, len);
 
 	std::unique_ptr<suffixsort> sorter( suffixsort::instance( text_eof,
 			len_eof, jobs, std::cerr) );
 
-	sorter->run();
+	sorter->build_sa();
 
 	const uint32 * const sa = sorter->get_sa();
 
 	BOOST_CHECK( has_sa_range(sa, len_eof) );
 	BOOST_CHECK( has_sa_unique(sa, len_eof) );
 	BOOST_CHECK( has_sa_terminator(sa, len_eof) );
-	BOOST_CHECK( has_sa_equal(sa, expect, len_eof) );
+	BOOST_CHECK( is_ascending(sa, text_eof, len) );
+
+	sorter->build_lcp();
+	
+	const uint32 * const lcp = sorter->get_lcp();
+	
+	BOOST_CHECK( has_correct_lcp(sa, lcp, text_eof, len) );
 
 	delete [] text_eof;
 }
 
 BOOST_AUTO_TEST_CASE( read_text ) 
 {
-	// test/empty
-	{
-		char * text = (char *)read_byte_string("test/empty", 0);
-		BOOST_CHECK( strcmp("", text) == 0 );
-		delete [] text;
-	}
 	// test/banana
 	{
 		char * text = (char *)read_byte_string("data/trivial/banana", 6);
@@ -127,25 +134,31 @@ BOOST_AUTO_TEST_CASE( read_binary )
 {
 	// test/cafebabe
 	{
-		uint32 * data = (uint32 *)read_byte_string("test/cafebabe", 8);
+		uint32 * data = (uint32 *)read_byte_string("test/cafebabe", 4);
 		BOOST_CHECK( *data == 0xCAFEBABE );
 		delete [] data;
 	}
 }
 
-BOOST_AUTO_TEST_CASE( sequential ) 
+BOOST_AUTO_TEST_CASE( run_test_files_limited ) 
 {
-	run_sequential("test/banana", banana_sa);
-	// TODO more complex input
-}
-
-/*
-BOOST_AUTO_TEST_CASE( parallel ) 
-{
-	for (int jobs = 1 ; jobs <= 32 ; ++jobs) {
-		// TODO 
+	for (int jobs = 1 ; jobs <= 8 ; jobs <<= 1) {
+		for (auto filename : test_files) {
+			std::cerr << "Running test with '" << filename 
+					<< "' (1 MB) " << jobs << " threads" << std::endl;
+			run_sorter(filename, jobs, (1 << 20));
+		}
 	}
 }
-*/
+
+BOOST_AUTO_TEST_CASE( run_largetext ) 
+{
+	std::string filename("data/largetext/enwik8");
+	for (int jobs = 1 ; jobs <= 8 ; jobs <<= 1) {
+		std::cerr << "Running test with '" << filename 
+			<< " (95 MB) with " << jobs << " threads" << std::endl;
+		run_sorter(filename, jobs);
+	}
+}
 
 // vim:set ts=4 sts=4 sw=4 noexpandtab:

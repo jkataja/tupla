@@ -126,7 +126,7 @@ int main(int argc, char** argv) {
 		std::unique_ptr<suffixsort> sorter( suffixsort::instance( text_eof,
 				len_eof, vm["jobs"].as<uint32>(), std::cerr) );
 
-		sorter->run();
+		sorter->build_sa();
 
 		// Compute LCP array from completed SA
 		if (vm.count("lcp")) {

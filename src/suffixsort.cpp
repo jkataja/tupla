@@ -38,14 +38,14 @@ suffixsort * sup::suffixsort::instance(const char * text,
 	}
 }
 
-void sup::suffixsort::run()
+void sup::suffixsort::build_sa()
 {
 	// Allocate and initialize with counting sort
 	uint32 alphasize = init();
 	err << SELF << ": alphabet size " << alphasize << std::endl;
-	uint32 precision = 1;
 
 	// Doubling steps until number of sorting groups matches length
+	uint32 precision = 1;
 	for (h = 1 ; (groups < len && h < len) ; h <<= 1) {
 		doubling();
 
@@ -64,7 +64,7 @@ void sup::suffixsort::run()
 	}
 
 	// Invert inverse suffix array
-	err << SELF << ": inverting suffix array" << std::endl;
+	err << SELF << ": inverting inverse suffix array" << std::endl;
 	invert();
 
 	finished_sa = true;

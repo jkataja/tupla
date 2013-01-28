@@ -160,8 +160,8 @@ public:
 			std::ostream&);
 	~suffixsort();
 
-	// Run suffix sort
-	virtual void run();
+	// Build suffix array
+	virtual void build_sa();
 
 	// Compute longest common prefix data from completed suffix array
 	virtual void build_lcp() = 0;

@@ -18,14 +18,14 @@ long sup::stat_filesize(const std::string& filename) {
 }
 
 void * sup::read_byte_string(const std::string& filename, const uint32 len) {
+	
+	if (len == 0) return new char[1]();
+
 	long len_eof = len + 1;
 
 	if (len > stat_filesize(filename)) {
 		throw std::runtime_error("attempt to read past input");
 	}
-
-	// empty file
-	if (len == 0) return new char[1]();
 
 	boost::iostreams::mapped_file_source in;
 	try {
