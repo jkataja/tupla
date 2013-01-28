@@ -15,7 +15,7 @@ public:
 
 	void run()
 	{
-		sorter->doubling(p, n);
+		sorter->doubling_range(p, n);
 	}
 
 protected:

@@ -56,7 +56,7 @@ protected:
 
 	// Doubling step
 	virtual void doubling() = 0;
-	virtual void doubling(uint32, size_t) = 0;
+	virtual void doubling_range(uint32, size_t) = 0;
 
 	// Longest common prefix for range
 	void lcp_range(uint32 p, uint32 n);

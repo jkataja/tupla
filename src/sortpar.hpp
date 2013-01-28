@@ -109,7 +109,7 @@ protected:
 
 	virtual void invert();
 	virtual void doubling();
-	virtual void doubling(uint32, size_t);
+	virtual void doubling_range(uint32, size_t);
 
 public:
 

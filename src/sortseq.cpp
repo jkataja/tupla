@@ -60,9 +60,14 @@ uint32 sup::sortseq::init()
 
 void sup::sortseq::doubling()
 {
-	uint32 p = 0; // Starting index of sorted group
+	doubling_range(0, len);
+}
+
+void sup::sortseq::doubling_range(uint32 p, size_t n) 
+{
+	uint32 sp = 0; // Starting index of sorted group
 	uint32 sl = 0; // Sorted groups length following start
-	for (size_t i = 0 ; i < len ; ) {
+	for (size_t i = p ; i < p+n-1 ; ) {
 		// Skip sorted group
 		if (uint32 s = get_sorted(i)) {
 			i += s; sl += s;
@@ -70,19 +75,16 @@ void sup::sortseq::doubling()
 		} 
 		// Combine sorted group before i
 		if (sl > 0) {
-			set_sorted(p, sl);
+			set_sorted(sp, sl);
 			sl = 0;
 		}
 		// Sort unsorted group i..g
 		uint32 g = isa[ sa[i] ] + 1;
 		groups += tqsort(i, g-i);
-		p = i = g;
+		sp = i = g;
 	}
 	// Combine sorted group at end
-	if (sl > 0) set_sorted(p, sl);
-}
-
-void sup::sortseq::doubling(uint32 p, size_t n) {
+	if (sl > 0) set_sorted(sp, sl);
 }
 
 void sup::sortseq::invert()

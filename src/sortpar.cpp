@@ -164,7 +164,7 @@ uint32 sup::sortpar::init()
 	return alphasize;
 }
 
-void sup::sortpar::doubling(uint32 p, size_t n) {
+void sup::sortpar::doubling_range(uint32 p, size_t n) {
 	uint32 sp = p; // Sorted group start
 	uint32 sl = 0; // Sorted groups length following start
 	uint32 ns = 0; // New singleton groups g

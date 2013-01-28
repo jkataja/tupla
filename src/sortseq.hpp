@@ -31,7 +31,7 @@ protected:
 
 	virtual uint32 init();
 	virtual void doubling();
-	virtual void doubling(uint32, size_t);
+	virtual void doubling_range(uint32, size_t);
 	virtual void invert();
 
 public:

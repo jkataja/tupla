@@ -106,7 +106,7 @@ int main(int argc, char** argv) {
 		std::string in_name( vm["input-file"].as<std::string>() );
 		// Type limits
 		long in_filesize = stat_filesize(in_name);
-		if (in_filesize > MaxInput) {
+		if ((size_t)in_filesize > MaxInput) {
 			std::cerr << SELF << ": input file too large (max 2 GiB)" 
 					<< std::endl << std::flush;
 			return EXIT_FAILURE;
