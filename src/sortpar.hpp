@@ -65,19 +65,65 @@ private:
 		threads.join_all();
 	}
 
-	// Ternary quicksort on items in range p..p+n-1
+	// Ternary quicksort on items in range p..p+n-1 , recursing on sort_switch
 	// Returns the count of new singleton groups
 	uint32 tqsort(uint32 p, size_t n);
 
+	// Ternary quicksort on items in range p..p+n-1 , recursing on tqsort_grainsize
+	// Returns the count of new singleton groups
+	uint32 tqsort_grainsize(uint32 p, size_t n);
+
 	// Pointers to sort tasks added too task pool
 	boost::ptr_vector<tqsort_task> tasks;
+
+	// Sort small tables with bingo sort 
+	// Supposedly more efficient than selection sort with duplicate values
+	// Adapted from:
+	// @see http://en.wikipedia.org/wiki/Selection_sort#Variants
+	inline uint32 sort_small(uint32 p, size_t n)
+	{
+		uint32 a = p+n-1;
+		uint32 eqn = 0; // Count of equal items
+		uint32 ns = 0; // Count of assigned singleton groups
+
+		// Find the highest value
+		uint64 v = k(a);
+		for (uint32 i = a ; i >= p ; --i)
+			if (k(i) > v) v = k(i);
+		while ((a > p) && (k(a) == v)) { --a; ++eqn; }
+
+		// Move every item with highest values to end of list
+		// One pass for each value in list
+		while (a > p) {
+			uint64 f = v;
+			v = k(a);
+			for (uint32 i = a - 1 ; i >= p ; --i) {
+				uint64 ki = k(i);
+				if (ki == f) { swap(i, a--); ++eqn; }
+				else if (ki > v) v = ki;
+			}
+			// Assign items sharing highest value to new group
+			assign(a + 1, eqn); ns += (eqn == 1);
+			eqn = 0;
+			while ((a > p) && (k(a) == v)) { --a; ++eqn; }
+		}
+		// First index also contained highest value
+		if (k(p) == v) {
+			assign(p, eqn + 1); ns += (eqn == 0);
+		}
+		else {
+			assign(a + 1, eqn); ns += (eqn == 1);
+			assign(p, 1);  ++ns;
+		}
+		return ns;
+	}
 
 	// Sort grain size range in this thread, or add new task to sort it later
 	// Returns the count of new singleton groups
 	inline uint32 sort_switch(uint32 p, size_t n) 
 	{
 		// Call tqsort in this thread
-		if (n < BucketSize) return tqsort(p, n);
+		if (n < BucketSize) return tqsort_grainsize(p, n);
 
 		// Create new task in thread pool to sort range
 		tqsort_task * job = new tqsort_task(this, p, n);

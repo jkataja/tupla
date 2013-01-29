@@ -25,46 +25,7 @@ uint32 sup::sortpar::tqsort(uint32 p, size_t n)
 	uint32 a,b,c,d;
 	uint32 pn = p + n;
 
-	// Sort small tables with bingo sort 
-	// Supposedly more efficient than selection sort with duplicate values
-	// Adapted from:
-	// @see http://en.wikipedia.org/wiki/Selection_sort#Variants
-	if (n < 7) {
-		a = pn-1;
-		uint32 eqn = 0; // Count of equal items
-		uint32 ns = 0; // Count of assigned singleton groups
-
-		// Find the highest value
-		uint64 v = k(a);
-		for (uint32 i = a ; i >= p ; --i)
-			if (k(i) > v) v = k(i);
-		while ((a > p) && (k(a) == v)) { --a; ++eqn; }
-
-		// Move every item with highest values to end of list
-		// One pass for each value in list
-		while (a > p) {
-			uint64 f = v;
-			v = k(a);
-			for (uint32 i = a - 1 ; i >= p ; --i) {
-				uint64 ki = k(i);
-				if (ki == f) { swap(i, a--); ++eqn; }
-				else if (ki > v) v = ki;
-			}
-			// Assign items sharing highest value to new group
-			assign(a + 1, eqn); ns += (eqn == 1);
-			eqn = 0;
-			while ((a > p) && (k(a) == v)) { --a; ++eqn; }
-		}
-		// First index also contained highest value
-		if (k(p) == v) {
-			assign(p, eqn + 1); ns += (eqn == 0);
-		}
-		else {
-			assign(a + 1, eqn); ns += (eqn == 1);
-			assign(p, 1);  ++ns;
-		}
-		return ns;
-	}
+	if (n < 7) return sort_small(p, n);
 
 	const uint64 v = choose_pivot(p, n);
 
@@ -104,6 +65,55 @@ uint32 sup::sortpar::tqsort(uint32 p, size_t n)
 	if (ltn > 0) lts = sort_switch(p, ltn);
 	assign(p+ltn, eqn); 
 	if (gtn > 0) gts = sort_switch(pn-gtn, gtn);
+
+	return (lts + (eqn == 1) + gts);
+}
+
+uint32 sup::sortpar::tqsort_grainsize(uint32 p, size_t n)
+{
+	uint32 a,b,c,d;
+	uint32 pn = p + n;
+
+	if (n < 7) return sort_small(p, n);
+
+	const uint64 v = choose_pivot(p, n);
+
+	// Partition
+	a = b = p;
+	c = d = p + (n-1);
+
+	// Assume on range i=f..g value ISA_h[ SA_h[i] ] is equal
+	// Only use the doubling part  ISA_h[ SA_h[i] + h ] in comparison
+	uint32 sv = (v & 0xFFFFFFFF);
+	uint32 tv;
+	for (;;) {
+		while (b <= c && (tv = isa[ sa[b] + h ]) <= sv) {
+			if (tv == sv) swap(a++, b); 
+			++b;
+		}
+		while (c >= b && (tv = isa[ sa[c] + h ]) >= sv) {
+			if (tv == sv) swap(c, d--);
+			--c;
+		}
+		if (b > c) break;
+		swap(b++, c--);
+	}
+
+	// Move split-end group to middle
+	const uint32 s = std::min(a-p, b-a ); vecswap(p, b-s, s);
+	const uint32 t = std::min(d-c, pn-1-d); vecswap(b, pn-t, t);
+
+	const uint32 ltn = b-a;
+	const uint32 gtn = d-c;
+	const uint32 eqn = n - ltn - gtn;
+
+	// New singleton groups in ranges less than and greater than pivot
+	uint32 lts = 0;
+	uint32 gts = 0;
+
+	if (ltn > 0) lts = tqsort_grainsize(p, ltn);
+	assign(p+ltn, eqn); 
+	if (gtn > 0) gts = tqsort_grainsize(pn-gtn, gtn);
 
 	return (lts + (eqn == 1) + gts);
 }
