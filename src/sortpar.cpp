@@ -216,10 +216,10 @@ void sup::sortpar::doubling()
 	// Thread pool
 	tp.size_controller().resize(jobs);
 
-	uint32 p = 0; // Starting index of bucket
+	// TODO Do not spawn if ((len - groups) < BucketSize) to limit overhead 
 
 	// Buckets p..pn
-	for (uint32 pn = BucketSize ; p < len ; p = pn , pn += BucketSize) {
+	for (uint32 p = 0, pn = BucketSize ; p < len ; p = pn , pn += BucketSize) {
 		if (pn > len - h) pn = len; // End of file
 		else if (!get_sorted(pn)) pn = isa[ sa[pn] ] + 1; // Last in group
 

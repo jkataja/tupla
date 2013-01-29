@@ -88,6 +88,7 @@ protected:
 	// Returns index to position where median was found
 	// Based on Bentley-McIlroy 1993: Engineering a Sort Function
 	inline uint32 med3(const uint32 a, const uint32 b, const uint32 c)
+	 __attribute__((always_inline))
 	{
 		const uint64 ka = k(a);
 		const uint64 kb = k(b);
@@ -103,24 +104,24 @@ protected:
 	// Based on Bentley-McIlroy 1993: Engineering a Sort Function
 	inline uint64 choose_pivot(uint32 p, size_t n)
 	{
-		uint32 b = p + (n/2); // Small arrays, middle element
-		if (n > 7) {
-			uint32 a = p;
-			uint32 c = p + n - 1;
-			if (n > 40) { // Big arrays, pseudomedian of 9
-				uint32 s = (n/8);
-				a = med3( a, a+s, a+2*s );
-				b = med3( b-s, b, b+s );
-				c = med3( c-2*s, c-s, c );
-			}
-			b = med3( a, b, c ); // Mid-size, med of 3
+		uint32 a = p;
+		uint32 b = p + (n/2);
+		uint32 c = p + n - 1;
+		if (n > 40) { // Big arrays, pseudomedian of 9
+			uint32 s = (n/8);
+			a = med3( a, a+s, a+2*s );
+			b = med3( b-s, b, b+s );
+			c = med3( c-2*s, c-s, c );
 		}
+		b = med3( a, b, c ); // Mid-size, med of 3
+
 		return k(b);
 	}
 
 	// Comparison key for index p in suffix array
 	// Returns pair ( ISA_h[ SA_h[p] ] , ISA_h[ SA_h[p] + h ] ) packed in long
-	inline uint64 k(const uint32 p)
+	inline uint64 k(const uint32 p) 
+	__attribute__((always_inline))
 	{
 		uint32 v = sa[p];
 
@@ -131,12 +132,14 @@ protected:
 
 	// Swap suffix array elements at indices
 	inline void swap(const uint32& a, const uint32& b)
+	__attribute__((always_inline))
 	{
 		std::swap( sa[a], sa[b] );
 	}
 
 	// Swap n suffix array elements starting from indices a and b
 	inline void vecswap(uint32 a, uint32 b, size_t n)
+	__attribute__((always_inline))
 	{
 		for ( ; n ; --n) swap(a++, b++);
 	}
@@ -144,6 +147,7 @@ protected:
 	// Renumber group at p..g with matching sorting key as g 
 	// Group number is last index with value to keep sort keys decreasing
 	inline void assign(uint32 p, size_t n)
+	__attribute__((always_inline))
 	{
 		uint32 g = p + n - 1;
 
@@ -156,6 +160,7 @@ protected:
 
 	// First byte set in suffix array sets sorted flag
 	inline void set_sorted(uint32 p, uint32 n)
+	__attribute__((always_inline))
 	{
 		sa[p] = (0x80000000U ^ n);
 		
@@ -163,6 +168,7 @@ protected:
 
 	// Length of sorted group starting from p
 	inline uint32 get_sorted(uint32 p)
+	__attribute__((always_inline))
 	{
 		uint32 v = sa[p];
 		return ((v >> 31) ? (0x7FFFFFFFU & v) : 0); 
@@ -195,9 +201,6 @@ public:
 
 	// Access the class internal SA
 	virtual const uint32 * const get_sa();
-
-	// Access the class internal ISA
-	virtual const uint32 * const get_isa();
 
 	// Access the class internal LCP array
 	virtual const uint32 * const get_lcp();

@@ -238,11 +238,6 @@ const uint32 * const sup::suffixsort::get_sa()
 	return (finished_sa ? sa : 0);
 }
 
-const uint32 * const sup::suffixsort::get_isa()
-{
-	return (finished_sa ? isa : 0);
-}
-
 const uint32 * const sup::suffixsort::get_lcp()
 {
 	return (finished_lcp ? lcp : 0);

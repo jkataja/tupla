@@ -53,14 +53,6 @@ bool has_sa_unique(const uint32 * const sa, uint32 len)
 	return ( dupes == 0 );
 }
 
-// SA and ISA match
-bool is_xvalid(const uint32 * const sa, const uint32 * const isa, uint32 len)
-{
-	for (size_t i = 0 ; i<len ; ++i)
-		if (isa[ sa[i] ] != i) return false;
-	return true;
-}
-
 // Suffixes in ascending order
 bool is_ascending(const uint32 * const sa, const char * text, uint32 len)
 {
@@ -86,7 +78,7 @@ bool has_correct_lcp(const uint32 * const sa, const uint32 * const lcp,
 	return true;
 }
 
-// Run parallel algorithm for input and compare result to expected
+// Run suffix sorting for input and compare result to expected
 void run_sorter(std::string& in_name, uint32 jobs, 
 		const uint32 cap = 0x7FFFFFFE)
 {
@@ -104,13 +96,11 @@ void run_sorter(std::string& in_name, uint32 jobs,
 	sorter->build_sa();
 
 	const uint32 * const sa = sorter->get_sa();
-	const uint32 * const isa = sorter->get_isa();
 
 	BOOST_CHECK( has_sa_range(sa, len_eof) );
 	BOOST_CHECK( has_sa_unique(sa, len_eof) );
 	BOOST_CHECK( has_sa_terminator(sa, len_eof) );
 	BOOST_CHECK( is_ascending(sa, text_eof, len_eof) );
-	BOOST_CHECK( is_xvalid(sa, isa, len_eof) );
 
 	sorter->build_lcp();
 	

@@ -65,11 +65,13 @@ private:
 		threads.join_all();
 	}
 
-	// Ternary quicksort on items in range p..p+n-1 , recursing on sort_switch
+	// Ternary quicksort on items in range p..p+n-1
+	// Recurse to sort_switch
 	// Returns the count of new singleton groups
 	uint32 tqsort(uint32 p, size_t n);
 
-	// Ternary quicksort on items in range p..p+n-1 , recursing on tqsort_grainsize
+	// Ternary quicksort on items in range p..p+n-1
+	// Recurse to tqsort_grainsize
 	// Returns the count of new singleton groups
 	uint32 tqsort_grainsize(uint32 p, size_t n);
 
@@ -81,6 +83,7 @@ private:
 	// Adapted from:
 	// @see http://en.wikipedia.org/wiki/Selection_sort#Variants
 	inline uint32 sort_small(uint32 p, size_t n)
+	__attribute__((always_inline))
 	{
 		uint32 a = p+n-1;
 		uint32 eqn = 0; // Count of equal items
@@ -141,6 +144,7 @@ private:
 	// Store assignments in isa_assign due to concurrent modifications 
 	// altering sort ordering
 	inline void assign(uint32 p, size_t n)
+	__attribute__((always_inline))
 	{
 		uint32 g = p + n - 1;
 
