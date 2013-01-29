@@ -25,15 +25,19 @@ Static boost libraries in Mac Ports may need to be recompiled to work correctly 
 usage
 =====
 
+The number of worker threads defaults to hardware threads available
+on the system.
+
 	Usage: sup [option]... input-file
 	Parallel suffix sorting in shared memory.
 
 	Options:
-	  -j [ --jobs ] arg (=4) concurrency level [1,64]
-	  -h [ --help ]          show this help
-	  -l [ --lcp ]           compute LCP array as well
-	  -f [ --force ]         force overwrite of existing output
-	  -v [ --validate ]      validate generated suffix array (slow)
-	  -o [ --output ]        print generated suffix array to stderr
-	  -b [ --benchmark ]     do not output file(s)
+	  -b [ --benchmark ]     Do not output file(s)
+	  -f [ --force ]         Force overwrite of existing output
+	  -h [ --help ]          Show this help and exit
+	  -j [ --jobs ] arg (=4) Allow arg sorting threads to run simultaneously [1,64]
+	  -l [ --lcp ]           Compute LCP array as well
+	  -n [ --count ] arg     Stop processing input after arg bytes
+	  -o [ --output ]        Print generated suffix array to stderr
+	  -v [ --validate ]      Validate generated suffix array (slow)
 
