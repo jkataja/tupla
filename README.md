@@ -3,11 +3,20 @@ sup
 
 Parallel suffix sorting in shared memory. 
 
-build
+Build
 =====
 
 Requires gcc 4.6, boost and cmake to build.
 The project includes boost::threadpool from http://threadpool.sourceforge.net/ 
+
+The build targets Core i7 CPU extensions by default.
+If the target CPU supports SSE4.2 extensions, the program uses
+cmpistri instruction in string comparisons.
+This instruction can match the common prefix of two strings at 16
+characters at a time, improving the performance when computing 
+Longest Common Prefix tables.
+To target your local machine, replace the option '-march=corei7'
+with '-march=native' in CMakeLists.txt in project root.
 
 Linux
 
@@ -22,11 +31,11 @@ Static boost libraries in Mac Ports may need to be recompiled to work correctly 
 	$ cmake -D CMAKE_C_COMPILER=gcc-mp-4.6 -D CMAKE_CXX_COMPILER=g++-mp-4.6 -D CMAKE_BUILD_TYPE=Release .
 	$ make
 
-usage
+Usage
 =====
 
-The number of worker threads defaults to hardware threads available
-on the system.
+The number of jobs (option --jobs) defaults to hardware threads
+available on the system.
 
 	Usage: sup [option]... input-file
 	Parallel suffix sorting in shared memory.
