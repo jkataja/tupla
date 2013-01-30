@@ -40,6 +40,8 @@ suffixsort * sup::suffixsort::instance(const char * text,
 
 void sup::suffixsort::build_sa()
 {
+	if (finished_sa) return;
+
 	// Allocate and initialize with counting sort
 	uint32 alphasize = init();
 	err << SELF << ": alphabet size " << alphasize << std::endl;
@@ -165,8 +167,7 @@ void sup::suffixsort::lcp_range(uint32 p, uint32 n)
 	for (size_t i = p ; i < p+n-1 ; ++i) {
 		uint32 k = isa[i];
 		uint32 j = sa[k - 1];
-		while (*(text + i + l) == *(text + j + l)) ++l;
-		lcp[k] = l;
+		lcp[k] = lcplen(i+l, j+l);
 		if (l > 0) --l;
 	}
 }
