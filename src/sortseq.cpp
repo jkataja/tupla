@@ -1,6 +1,5 @@
 #include "sortseq.hpp"
 #include "sup.hpp"
-
 #include <stdexcept>
 
 using namespace sup;
@@ -14,23 +13,44 @@ sup::sortseq::~sortseq()
 {
 }
 
+#ifndef LCP_PLCP
 void sup::sortseq::build_lcp()
 {
 	if (!finished_sa) {
 		throw std::runtime_error("suffix array not complete");
 	}
 
+	if (finished_lcp) return;
+
 	err << SELF << ": building longest common prefix array" << std::endl;
 
 	lcp = new uint32[len];
 	memset(lcp, 0, (len * sizeof(uint32)) );
 
-	// Use throwaway inverse suffix array table for plcp
+	lcp_range(0, len);
+
+	finished_lcp = true;
+}
+#else
+void sup::sortseq::build_lcp()
+{
+	if (!finished_sa) {
+		throw std::runtime_error("suffix array not complete");
+	}
+
+	if (finished_lcp) return;
+
+	err << SELF << ": building longest common prefix array" << std::endl;
+
+	lcp = new uint32[len];
+	memset(lcp, 0, (len * sizeof(uint32)) );
+
+	// Use throwaway inverse suffix array table for PLCP
 	uint32 * plcp = isa;
 	
-	// Use lcp temorarily for phi
+	// Use allocated LCP temorarily for phi
 	uint32 * phi = lcp;
-	
+
 	// Compute phi for q=1
 	for (size_t i = 1 ; i < len ; ++i)
 		phi[ sa[i] ] = sa[i-1];
@@ -47,7 +67,8 @@ void sup::sortseq::build_lcp()
 	for (size_t i = 1 ; i < len ; ++i) {
 		uint32 j = sa[i - 1];
 		uint32 k = sa[i];
-		if (*(text + j - 1) != *(text + k - 1)) {
+		// Wrap around t[-1]
+		if ( j == 0 || k == 0  || *(text + j - 1) != *(text + k - 1) ) {
 			l = lcplen(j, k);
 			if (plcp[k] < l) 
 				plcp[k] = l;
@@ -65,6 +86,7 @@ void sup::sortseq::build_lcp()
 
 	finished_lcp = true;
 }
+#endif
 
 uint32 sup::sortseq::init()
 {
