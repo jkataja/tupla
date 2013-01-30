@@ -17,12 +17,6 @@ public:
 
 	void run()
 	{
-	/*
-		sorter->err_lock.lock();
-		sorter->err << "tqsort_task::run(" << p << "," << n << ")" 
-				<< std::endl;
-		sorter->err_lock.unlock();
-		*/
 		groups = sorter->tqsort(p, n);
 	}
 
