@@ -9,6 +9,10 @@
  * Bentley & McIlroy 1993: Engineering a Sort Function
  * SOFTWARE—PRACTICE AND EXPERIENCE, VOL. 23(11), 1249–1265 (NOVEMBER 1993)
  *
+ * Implements LCP array construction as described in:
+ * J. Kärkkäinen, G. Manzini & S.J. Puglisi 2009 
+ * Permuted Longest-Common-Prefix Array
+ *
  * @author jkataja
  */
 
@@ -17,6 +21,20 @@
 #include <iostream>
 #include <boost/cstdint.hpp>
 #include <boost/thread/mutex.hpp>
+
+#ifdef SSE4_2
+#include <nmmintrin.h>
+
+// Flags for _mm_cmpistri intrisic in SSE4.2 optimized lcplen:
+// Unsigned bytes source
+// Equal each compare: match a[i] with b[i]
+// Negative polarity gives matching elements
+//
+// Intel SSE4 Programming Reference
+// @see http://software.intel.com/sites/default/files/m/0/3/c/d/4/18187-d9156103.pdf 
+#define LCPLEN_FLAGS (_SIDD_UBYTE_OPS | _SIDD_CMP_EQUAL_EACH | _SIDD_NEGATIVE_POLARITY )
+
+#endif
 
 #include "numdefs.hpp"
 
@@ -128,6 +146,30 @@ protected:
 		return (v + h < len 
 				? (((uint64)isa[ v ] << 32) | isa[ v + h ] )
 				:  ((uint64)isa[ v ] << 32) ); 
+	}
+
+	// Find longest common prefix of positions a and b in text.
+	// SSE4.2 optimized version uses _mm_cmpistri intrisic to compare 
+	// 16 characters at a time, matching also nulls (if a==b until segfault)
+	inline uint32 lcplen(const uint32 a, const uint32 b)
+	__attribute__((always_inline))
+	{
+		const char * pa = (text + a);
+		const char * pb = (text + b);
+		uint32 l = 0;
+#ifndef SSE4_2
+		while (*pa++ == *pb++) ++l;
+		return l;
+#else
+		int n;
+		__m128i xa, xb;
+		do {
+			xa = _mm_loadu_si128((__m128i *)pa);
+			xb = _mm_loadu_si128((__m128i *)pb);
+		} while ( ((n = _mm_cmpistri(xa, xb, LCPLEN_FLAGS)) == 16) 
+				&& (l += n) && (pa += 16) && (pb += 16) );
+		return l + n;
+#endif
 	}
 
 	// Swap suffix array elements at indices

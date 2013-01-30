@@ -21,11 +21,47 @@ void sup::sortseq::build_lcp()
 	}
 
 	err << SELF << ": building longest common prefix array" << std::endl;
-	
+
 	lcp = new uint32[len];
 	memset(lcp, 0, (len * sizeof(uint32)) );
 
-	lcp_range(0, len);
+	// Use throwaway inverse suffix array table for plcp
+	uint32 * plcp = isa;
+	
+	// Use lcp temorarily for phi
+	uint32 * phi = lcp;
+	
+	// Compute phi for q=1
+	for (size_t i = 1 ; i < len ; ++i)
+		phi[ sa[i] ] = sa[i-1];
+	
+	// Turn phi into PLCP 
+	uint32 l = 0;
+	for (size_t i = 0 ; i < len-1 ; ++i) {
+		uint32 j = phi[i];
+		plcp[i] = (l += lcplen(i+l, j+l));
+		l = ( l >= 1 ? l - 1 : 0);
+	}
+
+	// Compute irreducible LCP values
+	for (size_t i = 1 ; i < len ; ++i) {
+		uint32 j = sa[i - 1];
+		uint32 k = sa[i];
+		if (*(text + j - 1) != *(text + k - 1)) {
+			l = lcplen(j, k);
+			if (plcp[k] < l) 
+				plcp[k] = l;
+		}
+	}
+
+	// Fill in the other values
+	for (size_t i = 1 ; i < len-1 ; ++i) 
+		if (plcp[i] + 1 < plcp[i-1])
+			plcp[i] = plcp[i-1] - 1;
+	
+	// Build LCP from PLCP permutation
+	for (size_t i = 0 ; i < len ; ++i)
+		lcp[i] = plcp[ sa[i] ];
 
 	finished_lcp = true;
 }
