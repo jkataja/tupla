@@ -21,9 +21,11 @@
 #include <iostream>
 #include <boost/cstdint.hpp>
 #include <boost/thread/mutex.hpp>
-
-#ifdef SSE4_2
+#ifdef __SSE4_2__
 #include <nmmintrin.h>
+#endif
+
+#include "numdefs.hpp"
 
 // Flags for _mm_cmpistri intrisic in SSE4.2 optimized lcplen:
 // Unsigned bytes source
@@ -32,11 +34,9 @@
 //
 // Intel SSE4 Programming Reference
 // @see http://software.intel.com/sites/default/files/m/0/3/c/d/4/18187-d9156103.pdf 
+#ifdef __SSE4_2__
 #define LCPLEN_FLAGS (_SIDD_UBYTE_OPS | _SIDD_CMP_EQUAL_EACH | _SIDD_NEGATIVE_POLARITY )
-
 #endif
-
-#include "numdefs.hpp"
 
 namespace sup {
 
@@ -149,19 +149,17 @@ protected:
 	}
 
 	// Find longest common prefix of positions a and b in text.
-	// SSE4.2 optimized version uses _mm_cmpistri intrisic to compare 
-	// 16 characters at a time, matching also nulls (if a==b until segfault)
+	// SSE4.2 version uses _mm_cmpistri intrisic to compare 16 characters 
+	// at a time, matching also nulls (if a==b until segfault)
 	inline uint32 lcplen(const uint32 a, const uint32 b)
 	__attribute__((always_inline))
 	{
 		const char * pa = (text + a);
 		const char * pb = (text + b);
-		uint32 l = 0;
-#ifndef SSE4_2
-		while (*pa++ == *pb++) ++l;
-		return l;
-#else
-		int n;
+#ifdef __SSE4_2__
+		uint32 l = 1;
+		uint32 n;
+		if (*pa++ != *pb++) return 0;
 		__m128i xa, xb;
 		do {
 			xa = _mm_loadu_si128((__m128i *)pa);
@@ -169,6 +167,10 @@ protected:
 		} while ( ((n = _mm_cmpistri(xa, xb, LCPLEN_FLAGS)) == 16) 
 				&& (l += n) && (pa += 16) && (pb += 16) );
 		return l + n;
+#else
+		uint32 l = 0;
+		while (*pa++ == *pb++) ++l;
+		return l;
 #endif
 	}
 
