@@ -44,7 +44,7 @@ available on the system.
 	  -b [ --benchmark ]     Do not output file(s)
 	  -f [ --force ]         Force overwrite of existing output
 	  -h [ --help ]          Show this help and exit
-	  -j [ --jobs ] arg (=4) Allow arg sorting threads to run simultaneously [1,64]
+	  -j [ --jobs ] arg (=4) Allow arg threads to run simultaneously [1,64]
 	  -l [ --lcp ]           Compute LCP array as well
 	  -n [ --count ] arg     Stop processing input after arg bytes
 	  -o [ --output ]        Print generated suffix array to stderr

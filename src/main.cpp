@@ -31,7 +31,7 @@ int main(int argc, char** argv)
 
 	try {
 		std::string jobs_str( boost::str( boost::format(
-			"Allow arg sorting threads to run simultaneously [%1%,%2%]") % JobsMin % JobsMax));
+			"Allow arg threads to run simultaneously [%1%,%2%]") % JobsMin % JobsMax));
 
 		po::options_description visible_opts("Options");
 		visible_opts.add_options()
