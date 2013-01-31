@@ -38,7 +38,7 @@
 #define LCPLEN_FLAGS (_SIDD_UBYTE_OPS | _SIDD_CMP_EQUAL_EACH | _SIDD_NEGATIVE_POLARITY )
 #endif
 
-namespace sup {
+namespace tupla {
 
 class suffixsort {
 
@@ -225,10 +225,10 @@ public:
 			std::ostream&);
 	~suffixsort();
 
-	// Build suffix array
+	// Build Suffix Array
 	virtual void build_sa();
 
-	// Compute longest common prefix data from completed suffix array
+	// Compute Longest Common Prefix array
 	virtual void build_lcp() = 0;
 
 	// Output generated SA

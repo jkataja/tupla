@@ -1,29 +1,22 @@
 cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
 
-set(sup_source_files
+set(tupla_source_files
 	suffixsort.cpp
 	sortseq.cpp
 	sortpar.cpp
-	sup.cpp
+	tupla.cpp
 	main.cpp
 )
-add_executable(sup ${sup_source_files})
-target_link_libraries(sup ${Boost_LIBRARIES})
+add_executable(tupla ${tupla_source_files})
+target_link_libraries(tupla ${Boost_LIBRARIES})
 
-set(supgrep_source_files
-	supgrep.cpp
-	sup.cpp
-)
-add_executable(supgrep ${supgrep_source_files})
-target_link_libraries(supgrep ${Boost_LIBRARIES})
-
-set(suptest_source_files
+set(tuplatest_source_files
 	suffixsort.cpp
 	sortseq.cpp
 	sortpar.cpp
-	sup.cpp
-	suptest.cpp
+	tupla.cpp
+	tuplatest.cpp
 )
-add_executable(suptest ${suptest_source_files})
-target_link_libraries(suptest ${Boost_LIBRARIES})
+add_executable(tuplatest ${tuplatest_source_files})
+target_link_libraries(tuplatest ${Boost_LIBRARIES})
 

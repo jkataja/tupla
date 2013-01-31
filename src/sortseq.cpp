@@ -1,20 +1,19 @@
 #include "sortseq.hpp"
-#include "sup.hpp"
+#include "tupla.hpp"
 #include <stdexcept>
 
-using namespace sup;
+using namespace tupla;
 
-sup::sortseq::sortseq(const char * text, const uint32 len, std::ostream& err)
+tupla::sortseq::sortseq(const char * text, const uint32 len, std::ostream& err)
 	: suffixsort(text, len, err)
 {
 }
 
-sup::sortseq::~sortseq()
+tupla::sortseq::~sortseq()
 {
 }
 
-#ifndef LCP_PLCP
-void sup::sortseq::build_lcp()
+void tupla::sortseq::build_lcp()
 {
 	if (!finished_sa) {
 		throw std::runtime_error("suffix array not complete");
@@ -22,25 +21,7 @@ void sup::sortseq::build_lcp()
 
 	if (finished_lcp) return;
 
-	err << SELF << ": building longest common prefix array" << std::endl;
-
-	lcp = new uint32[len];
-	memset(lcp, 0, (len * sizeof(uint32)) );
-
-	lcp_range(0, len);
-
-	finished_lcp = true;
-}
-#else
-void sup::sortseq::build_lcp()
-{
-	if (!finished_sa) {
-		throw std::runtime_error("suffix array not complete");
-	}
-
-	if (finished_lcp) return;
-
-	err << SELF << ": building longest common prefix array" << std::endl;
+	err << SELF << ": building longest common prefix array via permuted" << std::endl;
 
 	lcp = new uint32[len];
 	memset(lcp, 0, (len * sizeof(uint32)) );
@@ -86,9 +67,8 @@ void sup::sortseq::build_lcp()
 
 	finished_lcp = true;
 }
-#endif
 
-uint32 sup::sortseq::init()
+uint32 tupla::sortseq::init()
 {
 	uint32 group[Alpha] = { Z256 };
 	uint32 count[Alpha] = { Z256 };
@@ -116,12 +96,12 @@ uint32 sup::sortseq::init()
 	return alphasize;
 }
 
-void sup::sortseq::doubling()
+void tupla::sortseq::doubling()
 {
 	doubling_range(0, len);
 }
 
-void sup::sortseq::doubling_range(uint32 p, size_t n) 
+void tupla::sortseq::doubling_range(uint32 p, size_t n) 
 {
 	uint32 sp = 0; // Starting index of sorted group
 	uint32 sl = 0; // Sorted groups length following start
@@ -145,7 +125,7 @@ void sup::sortseq::doubling_range(uint32 p, size_t n)
 	if (sl > 0) set_sorted(sp, sl);
 }
 
-void sup::sortseq::invert()
+void tupla::sortseq::invert()
 {
 	invert_range(0, len);
 }

@@ -1,5 +1,5 @@
 #include "suffixsort.hpp"
-#include "sup.hpp"
+#include "tupla.hpp"
 #include "sortseq.hpp"
 #include "sortpar.hpp"
 
@@ -9,7 +9,7 @@
 #include <cstring>
 #include <boost/thread/thread.hpp>
 
-using namespace sup;
+using namespace tupla;
 
 suffixsort::suffixsort(const char * text, const uint32 len, std::ostream& err)
 	: sa(0), isa(0), lcp(0), h(0), text(text), len(len), groups(0),
@@ -24,7 +24,7 @@ suffixsort::~suffixsort()
 	delete [] lcp;
 }
 
-suffixsort * sup::suffixsort::instance(const char * text, 
+suffixsort * tupla::suffixsort::instance(const char * text, 
 		const uint32 len, const uint32 jobs, std::ostream& err)
 {
 	if (jobs > 1) {
@@ -38,7 +38,7 @@ suffixsort * sup::suffixsort::instance(const char * text,
 	}
 }
 
-void sup::suffixsort::build_sa()
+void tupla::suffixsort::build_sa()
 {
 	if (finished_sa) return;
 
@@ -73,7 +73,7 @@ void sup::suffixsort::build_sa()
 }
 
 
-uint32 sup::suffixsort::tqsort(uint32 p, size_t n)
+uint32 tupla::suffixsort::tqsort(uint32 p, size_t n)
 {
 	uint32 a,b,c,d;
 	uint32 pn = p + n;
@@ -161,7 +161,7 @@ uint32 sup::suffixsort::tqsort(uint32 p, size_t n)
 	return (lts + (eqn == 1) + gts);
 }
 
-void sup::suffixsort::lcp_range(uint32 p, uint32 n)
+void tupla::suffixsort::lcp_range(uint32 p, uint32 n)
 {
 	uint32 l = 0;
 	for (size_t i = p ; i < p+n-1 ; ++i) {
@@ -172,7 +172,7 @@ void sup::suffixsort::lcp_range(uint32 p, uint32 n)
 	}
 }
 
-void sup::suffixsort::count_range(uint32 p, uint32 n, uint32 * range_count, 
+void tupla::suffixsort::count_range(uint32 p, uint32 n, uint32 * range_count, 
 		uint32 j)
 {
 	uint32 * task_count = (range_count + (j * Alpha));
@@ -180,7 +180,7 @@ void sup::suffixsort::count_range(uint32 p, uint32 n, uint32 * range_count,
 		++task_count[  (uint8)*(text + i) ];
 }
 
-const uint32 sup::suffixsort::build_prefix(uint32 * count, 
+const uint32 tupla::suffixsort::build_prefix(uint32 * count, 
 	uint32 * range_count, uint32 * group, uint8 * sorted, uint32 jobs)
 {
 	uint32 alphasize = 0;
@@ -211,7 +211,7 @@ const uint32 sup::suffixsort::build_prefix(uint32 * count,
 	return alphasize;
 }
 
-void sup::suffixsort::sort_range(uint32 p, uint32 n, uint32 * range_count,
+void tupla::suffixsort::sort_range(uint32 p, uint32 n, uint32 * range_count,
 		uint32 * group, uint8 * sorted, uint32 j)
 {
 	uint32 * task_count = (range_count + (j * Alpha));
@@ -228,23 +228,23 @@ void sup::suffixsort::sort_range(uint32 p, uint32 n, uint32 * range_count,
 	}
 }
 
-void sup::suffixsort::invert_range(uint32 p, uint32 n)
+void tupla::suffixsort::invert_range(uint32 p, uint32 n)
 {
 	for (size_t i = p ; i<p+n ; ++i)
 		sa[ isa[i] ] = i;
 }
 
-const uint32 * const sup::suffixsort::get_sa()
+const uint32 * const tupla::suffixsort::get_sa()
 {
 	return (finished_sa ? sa : 0);
 }
 
-const uint32 * const sup::suffixsort::get_lcp()
+const uint32 * const tupla::suffixsort::get_lcp()
 {
 	return (finished_lcp ? lcp : 0);
 }
 
-bool sup::suffixsort::out_descending()
+bool tupla::suffixsort::out_descending()
 {
 	uint32 descending = 0;
 	for (size_t i = 1 ; i<len ; ++i) {
@@ -252,8 +252,8 @@ bool sup::suffixsort::out_descending()
 			std::string a( (text + sa[i]) );
 			std::string b( (text + sa[i-1]) );
 			a.append("$"); b.append("$");
-			if (a.length() > 34) a.erase(34);
-			if (b.length() > 34) b.erase(34);
+			if (a.length() > 36) a.erase(36);
+			if (b.length() > 36) b.erase(36);
 			std::replace( a.begin(), a.end(), '\n', '#');
 			std::replace( a.begin(), a.end(), '\t', '#');
 			std::replace( b.begin(), b.end(), '\n', '#');
@@ -267,7 +267,7 @@ bool sup::suffixsort::out_descending()
 	return (descending > 0);
 }
 
-bool sup::suffixsort::out_incorrect_lcp()
+bool tupla::suffixsort::out_incorrect_lcp()
 {
 	uint32 nomatch = 0;
 	for (size_t i = 1 ; i<len ; ++i) {
@@ -293,7 +293,7 @@ bool sup::suffixsort::out_incorrect_lcp()
 	return (nomatch > 0);
 }
 
-uint32 sup::suffixsort::count_dupes()
+uint32 tupla::suffixsort::count_dupes()
 {
 	uint32 * match = new uint32[len]();
 	uint32 dupes  = 0;
@@ -304,7 +304,7 @@ uint32 sup::suffixsort::count_dupes()
 	return dupes;
 }
 
-void sup::suffixsort::out_sa()
+void tupla::suffixsort::out_sa()
 {
 	err << "i       sa[i]   order            suffix" << std::endl;
 	for (size_t i = 0 ; i<len ; ++i)  {
@@ -325,7 +325,7 @@ void sup::suffixsort::out_sa()
 	}
 }
 
-void sup::suffixsort::out_lcp()
+void tupla::suffixsort::out_lcp()
 {
 	if (!finished_lcp) return;
 	err << "i       sa[i]   order            lcp[i] suffix" << std::endl;
@@ -342,7 +342,7 @@ void sup::suffixsort::out_lcp()
 	}
 }
 
-bool sup::suffixsort::out_validate()
+bool tupla::suffixsort::out_validate()
 {
 	if (!finished_sa) {
 		err << SELF << ": suffix array not complete" << std::endl;

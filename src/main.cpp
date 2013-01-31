@@ -13,19 +13,19 @@
 #include <boost/iostreams/device/mapped_file.hpp>
 #include <boost/thread.hpp>
 
-#include "sup.hpp"
+#include "tupla.hpp"
 #include "suffixsort.hpp"
 
 namespace po = boost::program_options;
 
-using namespace sup;
+using namespace tupla;
 
-#define USAGE "Usage: sup [option]... input-file\n" \
+#define USAGE "Usage: tupla [option]... input-file\n" \
 	"Parallel suffix sorting in shared memory.\n" \
 	"\n"
 
-int main(int argc, char** argv) {
-
+int main(int argc, char** argv) 
+{
 	// Hardware threads available
 	int hardware_jobs = boost::thread::hardware_concurrency();
 
@@ -42,7 +42,7 @@ int main(int argc, char** argv) {
 			  po::value<uint32>()->default_value(hardware_jobs),
 			  jobs_str.c_str()
 			)
-			( "lcp,l", "Compute LCP array as well" )
+			( "lcp,l", "Compute Longest Common Prefix array" )
 			( "count,n", 
 			  po::value<uint32>()->default_value(MaxInput, ""),
 			  "Stop processing input after arg bytes" 
@@ -149,6 +149,8 @@ int main(int argc, char** argv) {
 			const uint32 * const sa = sorter->get_sa();
 			write_byte_string(sa, ((len_eof) * sizeof(uint32)), out_name);
 		}
+
+		std::cerr << SELF << ": done" << std::endl;
 
 		delete [] text_eof;
 	}

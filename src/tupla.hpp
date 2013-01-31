@@ -15,10 +15,10 @@
 #define Z64 Z16,Z16,Z16,Z16
 #define Z256 Z64,Z64,Z64,Z64
 
-namespace sup {
+namespace tupla {
 
 // id for error messages
-static const char SELF[] = "sup";
+static const char SELF[] = "tupla";
 
 // Output rank table file suffix 
 static const char RankFileSuffix[] = "rank";

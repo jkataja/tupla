@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
-project(sup)
-
-option(USE_SSE4_2 "USE_SSE4_2" ON)
+project(tupla)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 

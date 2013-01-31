@@ -1,9 +1,9 @@
 #pragma once
 
-#include "sup.hpp"
+#include "tupla.hpp"
 #include "sortpar.hpp"
 
-namespace sup {
+namespace tupla {
 
 class doubling_task
 {
@@ -25,3 +25,5 @@ protected:
 };
 
 } // namespace
+
+// vim:set ts=4 sts=4 sw=4 noexpandtab:

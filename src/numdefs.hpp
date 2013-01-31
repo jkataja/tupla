@@ -8,7 +8,7 @@
 
 #include <boost/cstdint.hpp>
 
-namespace sup {
+namespace tupla {
 
 // Common typedefs for different sizes of integers 
 typedef boost::int64_t int64;

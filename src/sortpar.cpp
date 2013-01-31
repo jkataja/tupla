@@ -2,25 +2,25 @@
 #include <boost/bind.hpp>
 
 #include "sortpar.hpp"
-#include "sup.hpp"
+#include "tupla.hpp"
 #include "tqsort_task.hpp"
 #include "doubling_task.hpp"
 
-using namespace sup;
+using namespace tupla;
 
-sup::sortpar::sortpar(const char * text, const uint32 len, const uint32 jobs,
+tupla::sortpar::sortpar(const char * text, const uint32 len, const uint32 jobs,
 		std::ostream& err)
 	: suffixsort(text, len, err), isa_assign(0), jobs(jobs), 
 	  chunk( std::min( std::max(BucketSize, (len/jobs) + 1) , len) )
 {
 }
 
-sup::sortpar::~sortpar()
+tupla::sortpar::~sortpar()
 {
 	delete [] isa_assign;
 }
 
-uint32 sup::sortpar::tqsort(uint32 p, size_t n)
+uint32 tupla::sortpar::tqsort(uint32 p, size_t n)
 {
 	uint32 a,b,c,d;
 	uint32 pn = p + n;
@@ -69,7 +69,7 @@ uint32 sup::sortpar::tqsort(uint32 p, size_t n)
 	return (lts + (eqn == 1) + gts);
 }
 
-uint32 sup::sortpar::tqsort_grainsize(uint32 p, size_t n)
+uint32 tupla::sortpar::tqsort_grainsize(uint32 p, size_t n)
 {
 	uint32 a,b,c,d;
 	uint32 pn = p + n;
@@ -118,7 +118,7 @@ uint32 sup::sortpar::tqsort_grainsize(uint32 p, size_t n)
 	return (lts + (eqn == 1) + gts);
 }
 
-void sup::sortpar::build_lcp()
+void tupla::sortpar::build_lcp()
 {
 	if (!finished_sa) {
 		throw std::runtime_error("suffix array not complete");
@@ -129,13 +129,12 @@ void sup::sortpar::build_lcp()
 	lcp = new uint32[len];
 	memset(lcp, 0, (len * sizeof(uint32)) );
 
-	parallel_chunk( boost::bind(&sup::sortpar::lcp_range, this, _1, _2) );
+	parallel_chunk( boost::bind(&tupla::sortpar::lcp_range, this, _1, _2) );
 	
 	finished_lcp = true;
-
 }
 
-uint32 sup::sortpar::init()
+uint32 tupla::sortpar::init()
 {
 	uint32 group[Alpha] = { Z256 };
 	uint32 count[Alpha] = { Z256 };
@@ -153,7 +152,7 @@ uint32 sup::sortpar::init()
 	memset(range_count, 0, (Alpha * jobs * sizeof(uint32)) );
 
 	// Count characters and merge
-	parallel_chunk( boost::bind(&sup::sortpar::count_range, 
+	parallel_chunk( boost::bind(&tupla::sortpar::count_range, 
 			this, _1, _2, range_count, _3) );
 	for (size_t i = 0 ; i < (jobs * Alpha) ; ++i)
 		count[i & 0xFF] += range_count[i];
@@ -166,7 +165,7 @@ uint32 sup::sortpar::init()
 	uint32 alphasize = build_prefix(count, range_count, group, sorted, jobs);
 
 	// Counting sort on first character of suffix
-	parallel_chunk( boost::bind(&sup::sortpar::sort_range, 
+	parallel_chunk( boost::bind(&tupla::sortpar::sort_range, 
 			this, _1, _2, range_count, group, sorted, _3) ); 
 
 	delete [] range_count;
@@ -174,7 +173,7 @@ uint32 sup::sortpar::init()
 	return alphasize;
 }
 
-void sup::sortpar::doubling_range(uint32 p, size_t n) {
+void tupla::sortpar::doubling_range(uint32 p, size_t n) {
 	uint32 sp = p; // Sorted group start
 	uint32 sl = 0; // Sorted groups length following start
 	uint32 ns = 0; // New singleton groups g
@@ -204,12 +203,12 @@ void sup::sortpar::doubling_range(uint32 p, size_t n) {
 	groups_lock.unlock();
 }
 
-void sup::sortpar::invert()
+void tupla::sortpar::invert()
 {
-	parallel_chunk( boost::bind(&sup::sortpar::invert_range, this, _1, _2) ); 
+	parallel_chunk( boost::bind(&tupla::sortpar::invert_range, this, _1, _2) ); 
 }
 
-void sup::sortpar::doubling()
+void tupla::sortpar::doubling()
 {
 	memcpy(isa_assign, isa, sizeof(uint32) * len);
 

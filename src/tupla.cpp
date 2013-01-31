@@ -4,11 +4,11 @@
 #include <stdexcept>
 #include <boost/iostreams/device/mapped_file.hpp>
 
-#include "sup.hpp"
+#include "tupla.hpp"
 
-using namespace sup;
+using namespace tupla;
 
-long sup::stat_filesize(const std::string& filename) {
+long tupla::stat_filesize(const std::string& filename) {
 	struct stat stat_buf;
 	int rc = stat(filename.c_str(), &stat_buf);
 	if (rc != 0) {
@@ -17,7 +17,7 @@ long sup::stat_filesize(const std::string& filename) {
 	return (rc == 0 ? stat_buf.st_size : -1);
 }
 
-void * sup::read_byte_string(const std::string& filename, const uint32 len) {
+void * tupla::read_byte_string(const std::string& filename, const uint32 len) {
 	
 	if (len == 0) return new char[1]();
 
@@ -50,7 +50,7 @@ void * sup::read_byte_string(const std::string& filename, const uint32 len) {
 	return data_eof;
 }
 
-void sup::write_byte_string(const void * const data, const size_t len, 
+void tupla::write_byte_string(const void * const data, const size_t len, 
 		const std::string& filename) {
 	boost::iostreams::mapped_file_sink out(filename);
 	boost::iostreams::mapped_file_params out_params;

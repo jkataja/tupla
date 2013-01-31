@@ -1,13 +1,5 @@
 /**
- * Doubling suffix sort. Sequential implementation. Requires 8n memory.
- *
- * Impelements prefix doubling as described in:
- * N. Jesper Larsson & Kunihiko Sadakane: Faster Suffix Sorting
- * LU-CS-TR:99-214 [LUNFD6/(NFCS-3140)/1{20/(1999)]
- *
- * Uses using ternary split quick sort, based on:
- * Bentley & McIlroy 1993: Engineering a Sort Function
- * SOFTWARE—PRACTICE AND EXPERIENCE, VOL. 23(11), 1249–1265 (NOVEMBER 1993)
+ * Doubling suffix sort. Sequential implementation requires 8n memory.
  *
  * @author jkataja
  */
@@ -20,7 +12,7 @@
 #include "numdefs.hpp"
 #include "suffixsort.hpp"
 
-namespace sup {
+namespace tupla {
 
 class sortseq : public suffixsort {
 private:

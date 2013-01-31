@@ -5,10 +5,10 @@
 #include <cstdio>
 #include <cstring>
 
-#include "sup.hpp"
+#include "tupla.hpp"
 #include "suffixsort.hpp"
 
-using namespace sup;
+using namespace tupla;
 
 std::vector<std::string> test_files = { 
 	"data/trivial/banana",

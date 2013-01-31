@@ -1,5 +1,5 @@
-sup
-===
+tupla
+=====
 
 Parallel suffix sorting in shared memory. 
 
@@ -37,7 +37,7 @@ Usage
 The number of jobs (option --jobs) defaults to hardware threads
 available on the system.
 
-	Usage: sup [option]... input-file
+	Usage: tupla [option]... input-file
 	Parallel suffix sorting in shared memory.
 
 	Options:
