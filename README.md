@@ -9,7 +9,7 @@ Build
 Requires gcc 4.6, boost and cmake to build.
 The project includes boost::threadpool from http://threadpool.sourceforge.net/ 
 
-The build targets Core i7 CPU extensions by default.
+The build targets Core i7 instruction set by default.
 If the target CPU supports SSE4.2 extensions, the program uses
 cmpistri instruction in string comparisons.
 This instruction can match the common prefix of two strings at 16
