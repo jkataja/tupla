@@ -219,6 +219,43 @@ protected:
 		
 	}
 
+	// Sort small range using variation of selection sort
+	// Based on N. Jesper Larsson & Kunihiko Sadakane: Faster Suffix Sorting
+	inline uint32 sort_small(uint32 p, uint32 n)
+	__attribute__((always_inline))
+	{
+		uint32 a = p; // Start of current sorting range and minimum group
+		uint32 b = p; // End of minimum group
+		uint32 d = p+n-1; // End of sorting range
+		uint32 ns = 0; // Count of assigned singleton groups
+		uint32 tv; // Comparison element
+
+		while (a < d) {
+			// Move minimum group to range a..b-1
+			for (uint32 i = b = a+1 , min = isa[ sa[a] + h ] ; i <= d ; ++i) {
+				if ((tv = isa[ sa[i] + h ]) < min) {
+					min = tv;
+					swap(i, a);
+					b = a+1;
+				}
+				else if (tv == min) {
+					swap(i, b++);
+				}
+			}
+			// Renumber minimum group 
+			assign(a, b-a);
+			if (b - a == 1) ++ns;
+			a = b;
+		}
+		// Last element contains a singleton group
+		if (a == d) {
+			assign(a, 1); ++ns;
+		}
+
+		return ns;
+	}
+	
+
 public:
 
 	static suffixsort * instance(const char *, const uint32, const uint32, 

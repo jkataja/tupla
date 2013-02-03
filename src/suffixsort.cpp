@@ -80,35 +80,7 @@ uint32 tupla::suffixsort::tqsort(uint32 p, size_t n)
 	uint32 pn = p + n;
 
 	// Sort small tables with selection sort 
-	if (n < 7) {
-		a = p; // Start of sorting range
-		d = pn-1; // End of sorting range
-		uint32 ns = 0; // Count of assigned singleton groups
-
-		while (a < d) {
-			// Move minimum group to range a..b-1
-			for (uint32 i = b = a+1 , sv = isa[ sa[a] + h ] ; i <= d ; ++i) {
-				if ((tv = isa[ sa[i] + h ]) < sv) {
-					sv = tv;
-					swap(i, a);
-					b = a+1;
-				}
-				else if (tv == sv) {
-					swap(i, b++);
-				}
-			}
-			// Renumber minimum group 
-			assign(a, b-a);
-			if (b - a == 1) ++ns;
-			a = b;
-		}
-		// Last element contains a singleton group
-		if (a == d) {
-			assign(a, 1); ++ns;
-		}
-
-		return ns;
-	}
+	if (n < 7) return sort_small(p, n);
 	
 	const uint64 v = choose_pivot(p, n);
 

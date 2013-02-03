@@ -70,48 +70,42 @@ private:
 	// Pointers to sort tasks added too task pool
 	boost::ptr_vector<tqsort_task> tasks;
 
-	// Sort small tables with bingo sort 
-	// Supposedly more efficient than selection sort with duplicate values
-	// Adapted from:
-	// @see http://en.wikipedia.org/wiki/Selection_sort#Variants
-	inline uint32 sort_small(uint32 p, size_t n)
+	// Sort small range using variation of selection sort
+	// Based on N. Jesper Larsson & Kunihiko Sadakane: Faster Suffix Sorting
+	inline uint32 sort_small(uint32 p, uint32 n)
 	__attribute__((always_inline))
 	{
-		uint32 a = p+n-1;
-		uint32 eqn = 0; // Count of equal items
+		uint32 a = p; // Start of current sorting range and minimum group
+		uint32 b = p; // End of minimum group
+		uint32 d = p+n-1; // End of sorting range
 		uint32 ns = 0; // Count of assigned singleton groups
+		uint32 tv; // Comparison element
 
-		// Find the highest value
-		uint64 v = k(a);
-		for (uint32 i = a ; i >= p ; --i)
-			if (k(i) > v) v = k(i);
-		while ((a > p) && (k(a) == v)) { --a; ++eqn; }
-
-		// Move every item with highest values to end of list
-		// One pass for each value in list
-		while (a > p) {
-			uint64 f = v;
-			v = k(a);
-			for (uint32 i = a - 1 ; i >= p ; --i) {
-				uint64 ki = k(i);
-				if (ki == f) { swap(i, a--); ++eqn; }
-				else if (ki > v) v = ki;
+		while (a < d) {
+			// Move minimum group to range a..b-1
+			for (uint32 i = b = a+1 , min = isa[ sa[a] + h ] ; i <= d ; ++i) {
+				if ((tv = isa[ sa[i] + h ]) < min) {
+					min = tv;
+					swap(i, a);
+					b = a+1;
+				}
+				else if (tv == min) {
+					swap(i, b++);
+				}
 			}
-			// Assign items sharing highest value to new group
-			assign(a + 1, eqn); ns += (eqn == 1);
-			eqn = 0;
-			while ((a > p) && (k(a) == v)) { --a; ++eqn; }
+			// Renumber minimum group 
+			assign(a, b-a);
+			if (b - a == 1) ++ns;
+			a = b;
 		}
-		// First index also contained highest value
-		if (k(p) == v) {
-			assign(p, eqn + 1); ns += (eqn == 0);
+		// Last element contains a singleton group
+		if (a == d) {
+			assign(a, 1); ++ns;
 		}
-		else {
-			assign(a + 1, eqn); ns += (eqn == 1);
-			assign(p, 1);  ++ns;
-		}
+
 		return ns;
 	}
+	
 
 	// Sort grain size range in this thread, or add new task to sort it later
 	// Returns the count of new singleton groups
