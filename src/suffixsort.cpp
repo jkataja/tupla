@@ -76,46 +76,37 @@ void tupla::suffixsort::build_sa()
 uint32 tupla::suffixsort::tqsort(uint32 p, size_t n)
 {
 	uint32 a,b,c,d;
+	uint32 sv,tv;
 	uint32 pn = p + n;
 
-	// Sort small tables with bingo sort 
-	// Supposedly more efficient than selection sort with duplicate values
-	// Adapted from:
-	// @see http://en.wikipedia.org/wiki/Selection_sort#Variants
+	// Sort small tables with selection sort 
 	if (n < 7) {
-		a = pn-1;
-		uint32 eqn = 0; // Count of equal items
+		a = p; // Start of sorting range
+		d = pn-1; // End of sorting range
 		uint32 ns = 0; // Count of assigned singleton groups
 
-		// Find the highest value
-		uint64 v = k(a);
-		for (uint32 i = a ; i >= p ; --i)
-			if (k(i) > v) v = k(i);
-		while ((a > p) && (k(a) == v)) { --a; ++eqn; }
-
-		// Move every item with highest values to end of list
-		// One pass for each value in list
-		while (a > p) {
-			uint64 f = v;
-			v = k(a);
-			for (uint32 i = a - 1 ; i >= p ; --i) {
-				uint64 ki = k(i);
-				if (ki == f) { swap(i, a--); ++eqn; }
-				else if (ki > v) v = ki;
+		while (a < d) {
+			// Move minimum group to range a..b-1
+			for (uint32 i = b = a+1 , sv = isa[ sa[a] + h ] ; i <= d ; ++i) {
+				if ((tv = isa[ sa[i] + h ]) < sv) {
+					sv = tv;
+					swap(i, a);
+					b = a+1;
+				}
+				else if (tv == sv) {
+					swap(i, b++);
+				}
 			}
-			// Assign items sharing highest value to new group
-			assign(a + 1, eqn); ns += (eqn == 1);
-			eqn = 0;
-			while ((a > p) && (k(a) == v)) { --a; ++eqn; }
+			// Renumber minimum group 
+			assign(a, b-a);
+			if (b - a == 1) ++ns;
+			a = b;
 		}
-		// First index also contained highest value
-		if (k(p) == v) {
-			assign(p, eqn + 1); ns += (eqn == 0);
+		// Last element contains a singleton group
+		if (a == d) {
+			assign(a, 1); ++ns;
 		}
-		else {
-			assign(a + 1, eqn); ns += (eqn == 1);
-			assign(p, 1);  ++ns;
-		}
+
 		return ns;
 	}
 	
@@ -127,8 +118,7 @@ uint32 tupla::suffixsort::tqsort(uint32 p, size_t n)
 
 	// Assume on range i=f..g value ISA_h[ SA_h[i] ] is equal
 	// Only use the doubling part  ISA_h[ SA_h[i] + h ] as comparison key
-	uint32 sv = (v & 0xFFFFFFFF);
-	uint32 tv;
+	sv = (v & 0xFFFFFFFF);
 	for (;;) {
 		while (b <= c && (tv = isa[ sa[b] + h ]) <= sv) {
 			if (tv == sv) swap(a++, b); 
