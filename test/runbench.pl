@@ -61,7 +61,7 @@ my $bin = "bin/tupla";
 my $baseopts = "-b"; # don't write output
 
 my @jobs = map { 2 ** $_ } (0..3);
-my $runs = 1;
+my $runs = 3;
 my @out;
 
 # Header (Linux only)
@@ -87,19 +87,24 @@ foreach my $file (keys %files) {
 }
 
 # Same file capped to different length
-my $largetext = "data/largetext/enwik8";
+my $largetext = "data/largetext/enwik9";
 
-foreach my $len ( map { 10 ** $_ } (5..8) ) {
-	my $basetime = -1.0;
-	foreach my $jobs (@jobs) {
-		my $cmd = "$bin $baseopts -j$jobs -n$len $largetext";
-		my $avgtime;
-		if (defined $runtimes{$cmd}) { $avgtime = $runtimes{$cmd}; }
-		else { $avgtime = &run_timed($cmd, $runs); }
-		if ($basetime < 0) { $basetime = $avgtime; }
-		my $ratio = ($basetime / $avgtime);
-		push @out, sprintf "enwik8,%d,%d,%.2f,%.3f\n", $len,$jobs,$avgtime,$ratio;
+if (-r $largetext) {
+	foreach my $len ( map { 10 ** $_ } (5..9) ) {
+		my $basetime = -1.0;
+		foreach my $jobs (@jobs) {
+			my $cmd = "$bin $baseopts -j$jobs -n$len $largetext";
+			my $avgtime;
+			if (defined $runtimes{$cmd}) { $avgtime = $runtimes{$cmd}; }
+			else { $avgtime = &run_timed($cmd, $runs); }
+			if ($basetime < 0) { $basetime = $avgtime; }
+			my $ratio = ($basetime / $avgtime);
+			push @out, sprintf "enwik9,%d,%d,%.2f,%.3f\n", $len,$jobs,$avgtime,$ratio;
+		}
 	}
+}
+else {
+	print STDERR "*** File '$largetext' not found\n";
 }
 
 foreach my $line (@out) { print $line }
