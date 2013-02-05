@@ -1,0 +1,240 @@
+*** Host: z1-3
+*** CPU model: Intel(R) Xeon(R) CPU E31245 @ 3.30GHz
+*** CPU cache: 8192 KB
+*** Command 'bin/tupla -b -j1 data/bench/enwik8'
+*** Averaging runtime over 3 runs
+*** Load: 0.05 0.29 0.21
+tupla: using sequential algorithm
+tupla: alphabet size 206
+tupla: doubling 1 with 266047 singleton groups (0.3% complete)
+tupla: doubling 2 with 8625338 singleton groups (8.6% complete)
+tupla: doubling 3 with 50886770 singleton groups (50.9% complete)
+tupla: doubling 4 with 87793631 singleton groups (87.8% complete)
+tupla: doubling 5 with 96148945 singleton groups (96.1% complete)
+tupla: doubling 6 with 98575376 singleton groups (98.6% complete)
+tupla: doubling 7 with 99526255 singleton groups (99.5% complete)
+tupla: doubling 8 with 99872332 singleton groups (99.9% complete)
+tupla: doubling 9 with 99959756 singleton groups (99.96% complete)
+tupla: doubling 10 with 99990199 singleton groups (99.990% complete)
+tupla: doubling 11 with 99996765 singleton groups (99.9968% complete)
+tupla: doubling 12 with 99999911 singleton groups (99.99991% complete)
+tupla: doubling 13 with 100000001 singleton groups (100.0% complete)
+tupla: inverting inverse suffix array
+tupla: done
+*** Run 1 timed: 31s
+tupla: using sequential algorithm
+tupla: alphabet size 206
+tupla: doubling 1 with 266047 singleton groups (0.3% complete)
+tupla: doubling 2 with 8625338 singleton groups (8.6% complete)
+tupla: doubling 3 with 50886770 singleton groups (50.9% complete)
+tupla: doubling 4 with 87793631 singleton groups (87.8% complete)
+tupla: doubling 5 with 96148945 singleton groups (96.1% complete)
+tupla: doubling 6 with 98575376 singleton groups (98.6% complete)
+tupla: doubling 7 with 99526255 singleton groups (99.5% complete)
+tupla: doubling 8 with 99872332 singleton groups (99.9% complete)
+tupla: doubling 9 with 99959756 singleton groups (99.96% complete)
+tupla: doubling 10 with 99990199 singleton groups (99.990% complete)
+tupla: doubling 11 with 99996765 singleton groups (99.9968% complete)
+tupla: doubling 12 with 99999911 singleton groups (99.99991% complete)
+tupla: doubling 13 with 100000001 singleton groups (100.0% complete)
+tupla: inverting inverse suffix array
+tupla: done
+*** Run 2 timed: 31s
+tupla: using sequential algorithm
+tupla: alphabet size 206
+tupla: doubling 1 with 266047 singleton groups (0.3% complete)
+tupla: doubling 2 with 8625338 singleton groups (8.6% complete)
+tupla: doubling 3 with 50886770 singleton groups (50.9% complete)
+tupla: doubling 4 with 87793631 singleton groups (87.8% complete)
+tupla: doubling 5 with 96148945 singleton groups (96.1% complete)
+tupla: doubling 6 with 98575376 singleton groups (98.6% complete)
+tupla: doubling 7 with 99526255 singleton groups (99.5% complete)
+tupla: doubling 8 with 99872332 singleton groups (99.9% complete)
+tupla: doubling 9 with 99959756 singleton groups (99.96% complete)
+tupla: doubling 10 with 99990199 singleton groups (99.990% complete)
+tupla: doubling 11 with 99996765 singleton groups (99.9968% complete)
+tupla: doubling 12 with 99999911 singleton groups (99.99991% complete)
+tupla: doubling 13 with 100000001 singleton groups (100.0% complete)
+tupla: inverting inverse suffix array
+tupla: done
+*** Run 3 timed: 31s
+*** Averaged time 31s
+*** Command 'bin/tupla -b -j2 data/bench/enwik8'
+*** Averaging runtime over 3 runs
+*** Load: 0.85 0.50 0.29
+tupla: using parallel algorithm with 2 jobs
+tupla: alphabet size 206
+tupla: doubling 1 with 2189 singleton groups (0.0% complete)
+tupla: doubling 2 with 487226 singleton groups (0.5% complete)
+tupla: doubling 3 with 12179471 singleton groups (12.2% complete)
+tupla: doubling 4 with 65381804 singleton groups (65.4% complete)
+tupla: doubling 5 with 91891322 singleton groups (91.9% complete)
+tupla: doubling 6 with 97065758 singleton groups (97.1% complete)
+tupla: doubling 7 with 98846944 singleton groups (98.8% complete)
+tupla: doubling 8 with 99689168 singleton groups (99.7% complete)
+tupla: doubling 9 with 99905637 singleton groups (99.9% complete)
+tupla: doubling 10 with 99972110 singleton groups (99.97% complete)
+tupla: doubling 11 with 99992795 singleton groups (99.993% complete)
+tupla: doubling 12 with 99997557 singleton groups (99.9976% complete)
+tupla: doubling 13 with 100000001 singleton groups (100.0% complete)
+tupla: inverting inverse suffix array
+	tupla: done
+*** Run 1 timed: 21s
+tupla: using parallel algorithm with 2 jobs
+tupla: alphabet size 206
+tupla: doubling 1 with 2189 singleton groups (0.0% complete)
+tupla: doubling 2 with 487226 singleton groups (0.5% complete)
+tupla: doubling 3 with 12179471 singleton groups (12.2% complete)
+tupla: doubling 4 with 65381804 singleton groups (65.4% complete)
+tupla: doubling 5 with 91891322 singleton groups (91.9% complete)
+tupla: doubling 6 with 97065758 singleton groups (97.1% complete)
+tupla: doubling 7 with 98846944 singleton groups (98.8% complete)
+tupla: doubling 8 with 99689168 singleton groups (99.7% complete)
+tupla: doubling 9 with 99905637 singleton groups (99.9% complete)
+tupla: doubling 10 with 99972110 singleton groups (99.97% complete)
+tupla: doubling 11 with 99992795 singleton groups (99.993% complete)
+tupla: doubling 12 with 99997557 singleton groups (99.9976% complete)
+tupla: doubling 13 with 100000001 singleton groups (100.0% complete)
+tupla: inverting inverse suffix array
+tupla: done
+*** Run 2 timed: 21s
+tupla: using parallel algorithm with 2 jobs
+tupla: alphabet size 206
+tupla: doubling 1 with 2189 singleton groups (0.0% complete)
+tupla: doubling 2 with 487226 singleton groups (0.5% complete)
+tupla: doubling 3 with 12179471 singleton groups (12.2% complete)
+tupla: doubling 4 with 65381804 singleton groups (65.4% complete)
+tupla: doubling 5 with 91891322 singleton groups (91.9% complete)
+tupla: doubling 6 with 97065758 singleton groups (97.1% complete)
+tupla: doubling 7 with 98846944 singleton groups (98.8% complete)
+tupla: doubling 8 with 99689168 singleton groups (99.7% complete)
+tupla: doubling 9 with 99905637 singleton groups (99.9% complete)
+tupla: doubling 10 with 99972110 singleton groups (99.97% complete)
+tupla: doubling 11 with 99992795 singleton groups (99.993% complete)
+tupla: doubling 12 with 99997557 singleton groups (99.9976% complete)
+tupla: doubling 13 with 100000001 singleton groups (100.0% complete)
+tupla: inverting inverse suffix array
+tupla: done
+*** Run 3 timed: 21s
+*** Averaged time 21s
+*** Command 'bin/tupla -b -j4 data/bench/enwik8'
+*** Averaging runtime over 3 runs
+*** Load: 1.61 0.79 0.40
+tupla: using parallel algorithm with 4 jobs
+tupla: alphabet size 206
+tupla: doubling 1 with 2189 singleton groups (0.0% complete)
+tupla: doubling 2 with 487226 singleton groups (0.5% complete)
+tupla: doubling 3 with 12179471 singleton groups (12.2% complete)
+tupla: doubling 4 with 65381804 singleton groups (65.4% complete)
+tupla: doubling 5 with 91891322 singleton groups (91.9% complete)
+tupla: doubling 6 with 97065758 singleton groups (97.1% complete)
+tupla: doubling 7 with 98846944 singleton groups (98.8% complete)
+tupla: doubling 8 with 99689168 singleton groups (99.7% complete)
+tupla: doubling 9 with 99905637 singleton groups (99.9% complete)
+tupla: doubling 10 with 99972110 singleton groups (99.97% complete)
+tupla: doubling 11 with 99992795 singleton groups (99.993% complete)
+tupla: doubling 12 with 99997557 singleton groups (99.9976% complete)
+tupla: doubling 13 with 100000001 singleton groups (100.0% complete)
+tupla: inverting inverse suffix array
+tupla: done
+*** Run 1 timed: 13s
+tupla: using parallel algorithm with 4 jobs
+tupla: alphabet size 206
+tupla: doubling 1 with 2189 singleton groups (0.0% complete)
+tupla: doubling 2 with 487226 singleton groups (0.5% complete)
+tupla: doubling 3 with 12179471 singleton groups (12.2% complete)
+tupla: doubling 4 with 65381804 singleton groups (65.4% complete)
+tupla: doubling 5 with 91891322 singleton groups (91.9% complete)
+tupla: doubling 6 with 97065758 singleton groups (97.1% complete)
+tupla: doubling 7 with 98846944 singleton groups (98.8% complete)
+tupla: doubling 8 with 99689168 singleton groups (99.7% complete)
+tupla: doubling 9 with 99905637 singleton groups (99.9% complete)
+tupla: doubling 10 with 99972110 singleton groups (99.97% complete)
+tupla: doubling 11 with 99992795 singleton groups (99.993% complete)
+tupla: doubling 12 with 99997557 singleton groups (99.9976% complete)
+tupla: doubling 13 with 100000001 singleton groups (100.0% complete)
+tupla: inverting inverse suffix array
+tupla: done
+*** Run 2 timed: 13s
+tupla: using parallel algorithm with 4 jobs
+tupla: alphabet size 206
+tupla: doubling 1 with 2189 singleton groups (0.0% complete)
+tupla: doubling 2 with 487226 singleton groups (0.5% complete)
+tupla: doubling 3 with 12179471 singleton groups (12.2% complete)
+tupla: doubling 4 with 65381804 singleton groups (65.4% complete)
+tupla: doubling 5 with 91891322 singleton groups (91.9% complete)
+tupla: doubling 6 with 97065758 singleton groups (97.1% complete)
+tupla: doubling 7 with 98846944 singleton groups (98.8% complete)
+tupla: doubling 8 with 99689168 singleton groups (99.7% complete)
+tupla: doubling 9 with 99905637 singleton groups (99.9% complete)
+tupla: doubling 10 with 99972110 singleton groups (99.97% complete)
+tupla: doubling 11 with 99992795 singleton groups (99.993% complete)
+tupla: doubling 12 with 99997557 singleton groups (99.9976% complete)
+tupla: doubling 13 with 100000001 singleton groups (100.0% complete)
+tupla: inverting inverse suffix array
+tupla: done
+*** Run 3 timed: 13s
+*** Averaged time 13s
+*** Command 'bin/tupla -b -j8 data/bench/enwik8'
+*** Averaging runtime over 3 runs
+*** Load: 2.28 1.07 0.51
+tupla: using parallel algorithm with 8 jobs
+tupla: alphabet size 206
+tupla: doubling 1 with 2189 singleton groups (0.0% complete)
+tupla: doubling 2 with 487226 singleton groups (0.5% complete)
+tupla: doubling 3 with 12179471 singleton groups (12.2% complete)
+tupla: doubling 4 with 65381804 singleton groups (65.4% complete)
+tupla: doubling 5 with 91891322 singleton groups (91.9% complete)
+tupla: doubling 6 with 97065758 singleton groups (97.1% complete)
+tupla: doubling 7 with 98846944 singleton groups (98.8% complete)
+tupla: doubling 8 with 99689168 singleton groups (99.7% complete)
+tupla: doubling 9 with 99905637 singleton groups (99.9% complete)
+tupla: doubling 10 with 99972110 singleton groups (99.97% complete)
+tupla: doubling 11 with 99992795 singleton groups (99.993% complete)
+tupla: doubling 12 with 99997557 singleton groups (99.9976% complete)
+tupla: doubling 13 with 100000001 singleton groups (100.0% complete)
+tupla: inverting inverse suffix array
+tupla: done
+*** Run 1 timed: 12s
+tupla: using parallel algorithm with 8 jobs
+tupla: alphabet size 206
+tupla: doubling 1 with 2189 singleton groups (0.0% complete)
+tupla: doubling 2 with 487226 singleton groups (0.5% complete)
+tupla: doubling 3 with 12179471 singleton groups (12.2% complete)
+tupla: doubling 4 with 65381804 singleton groups (65.4% complete)
+tupla: doubling 5 with 91891322 singleton groups (91.9% complete)
+tupla: doubling 6 with 97065758 singleton groups (97.1% complete)
+tupla: doubling 7 with 98846944 singleton groups (98.8% complete)
+tupla: doubling 8 with 99689168 singleton groups (99.7% complete)
+tupla: doubling 9 with 99905637 singleton groups (99.9% complete)
+tupla: doubling 10 with 99972110 singleton groups (99.97% complete)
+tupla: doubling 11 with 99992795 singleton groups (99.993% complete)
+tupla: doubling 12 with 99997557 singleton groups (99.9976% complete)
+tupla: doubling 13 with 100000001 singleton groups (100.0% complete)
+tupla: inverting inverse suffix array
+tupla: done
+*** Run 2 timed: 12s
+tupla: using parallel algorithm with 8 jobs
+tupla: alphabet size 206
+tupla: doubling 1 with 2189 singleton groups (0.0% complete)
+tupla: doubling 2 with 487226 singleton groups (0.5% complete)
+tupla: doubling 3 with 12179471 singleton groups (12.2% complete)
+tupla: doubling 4 with 65381804 singleton groups (65.4% complete)
+tupla: doubling 5 with 91891322 singleton groups (91.9% complete)
+tupla: doubling 6 with 97065758 singleton groups (97.1% complete)
+tupla: doubling 7 with 98846944 singleton groups (98.8% complete)
+tupla: doubling 8 with 99689168 singleton groups (99.7% complete)
+tupla: doubling 9 with 99905637 singleton groups (99.9% complete)
+tupla: doubling 10 with 99972110 singleton groups (99.97% complete)
+tupla: doubling 11 with 99992795 singleton groups (99.993% complete)
+tupla: doubling 12 with 99997557 singleton groups (99.9976% complete)
+tupla: doubling 13 with 100000001 singleton groups (100.0% complete)
+tupla: inverting inverse suffix array
+tupla: done
+*** Run 3 timed: 12s
+*** Averaged time 12s
+*** File 'data/largetext/enwik9' not found
+enwik8,100000000,1,31.82,1.000
+enwik8,100000000,2,21.37,1.489
+enwik8,100000000,4,13.95,2.282
+enwik8,100000000,8,12.38,2.571
