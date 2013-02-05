@@ -12,10 +12,10 @@ use Time::HiRes;
 sub pretty_time {
 	my ($time) = @_;
 	if ($time < 0.1) { return "< 0.1s"; }
-	if ($time < 10) { return sprintf("%.1f", $time)."s"; }
-	if ($time < 60) { return int($time)."s"; }
-	if ($time < 600) { return sprintf("%.1f", $time/60)."s"; }
-	return int($time/60)."m";
+	if ($time < 60) { return sprintf("%.2f", $time) . "s"; }
+	my $mins = int($time/60);
+	$time -= $mins * 60;
+	return $mins . "m " . sprintf("%.2f", $time/60) . "s";
 }
 
 sub run_timed {
