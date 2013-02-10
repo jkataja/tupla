@@ -207,7 +207,6 @@ protected:
 	__attribute__((always_inline))
 	{
 		sa[p] = (0x80000000U ^ n);
-		
 	}
 
 	// Length of sorted group starting from p
@@ -216,7 +215,6 @@ protected:
 	{
 		uint32 v = sa[p];
 		return ((v >> 31) ? (0x7FFFFFFFU & v) : 0); 
-		
 	}
 
 	// Sort small range using variation of selection sort
