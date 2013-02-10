@@ -8,7 +8,8 @@
 
 using namespace tupla;
 
-long tupla::stat_filesize(const std::string& filename) {
+long tupla::stat_filesize(const std::string& filename) 
+{
 	struct stat stat_buf;
 	int rc = stat(filename.c_str(), &stat_buf);
 	if (rc != 0) {
@@ -17,8 +18,8 @@ long tupla::stat_filesize(const std::string& filename) {
 	return (rc == 0 ? stat_buf.st_size : -1);
 }
 
-void * tupla::read_byte_string(const std::string& filename, const uint32 len) {
-	
+void * tupla::read_byte_string(const std::string& filename, const uint32 len) 
+{
 	if (len == 0) return new char[1]();
 
 	long len_eof = len + 1;
@@ -51,12 +52,14 @@ void * tupla::read_byte_string(const std::string& filename, const uint32 len) {
 }
 
 void tupla::write_byte_string(const void * const data, const size_t len, 
-		const std::string& filename) {
-	boost::iostreams::mapped_file_sink out(filename);
-	boost::iostreams::mapped_file_params out_params;
-	out_params.path = filename;
+		const std::string& filename) 
+{
+	boost::iostreams::mapped_file_params out_params(filename);
 	out_params.length = len;
 	out_params.new_file_size = len;
+	out_params.mode = std::ios_base::out;
+
+	boost::iostreams::mapped_file_sink out(out_params);
 	try {
 		out.open(out_params);
 	} catch (...) { }
