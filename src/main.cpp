@@ -8,6 +8,7 @@
 #include <fstream>
 #include <stdexcept>
 #include <memory>
+#include <sys/stat.h>
 #include <boost/program_options.hpp>
 #include <boost/format.hpp>
 #include <boost/iostreams/device/mapped_file.hpp>
@@ -28,6 +29,10 @@ int main(int argc, char** argv)
 {
 	// Hardware threads available
 	int hardware_jobs = boost::thread::hardware_concurrency();
+
+	// Create non-executable files
+	mode_t mask = umask(0111);
+	umask(mask | (S_IXUSR | S_IXGRP | S_IXOTH));
 
 	try {
 		std::string jobs_str( boost::str( boost::format(
@@ -88,18 +93,30 @@ int main(int argc, char** argv)
 			return EXIT_FAILURE;
 		}
 
-		// Output filename
-		std::string out_name(boost::str( boost::format("%1%.%2%") 
+		// Output filenames
+		std::string out_sa_name(boost::str( boost::format("%1%.%2%") 
 				% vm["input-file"].as<std::string>() % RankFileSuffix ) );
 
-		// Output already found
-		if (!vm.count("benchmark") && !vm.count("force")
-				&& std::ifstream( out_name.c_str() ).is_open())  {
-			std::cerr << SELF << ": output suffix array file '" << out_name 
-					<< "' already found" << std::endl;
-			std::cerr << SELF << ": use option -f to force overwrite" 
-					<< std::endl << std::flush;
-			return EXIT_FAILURE;
+		std::string out_lcp_name(boost::str( boost::format("%1%.%2%") 
+				% vm["input-file"].as<std::string>() % LCPFileSuffix ) );
+
+		// Output already exists
+		if (!vm.count("benchmark") && !vm.count("force")) {
+			if (std::ifstream( out_sa_name.c_str() ).is_open())  {
+				std::cerr << SELF << ": output suffix array file '" 
+						<< out_sa_name << "' exists" << std::endl;
+				std::cerr << SELF << ": use option -f to force overwrite" 
+						<< std::endl << std::flush;
+				return EXIT_FAILURE;
+			}
+			if (std::ifstream( out_lcp_name.c_str() ).is_open()
+					&& vm.count("lcp"))  {
+				std::cerr << SELF << ": output longest common prefix file '" 
+						<< out_lcp_name << "' exists" << std::endl;
+				std::cerr << SELF << ": use option -f to force overwrite" 
+						<< std::endl << std::flush;
+				return EXIT_FAILURE;
+			}
 		}
 		
 		// Read input text file
@@ -146,8 +163,14 @@ int main(int argc, char** argv)
 
 		// Output suffix array to file
 		if (!vm.count("benchmark")) {
+			const size_t len_bytes = ((len_eof) * sizeof(uint32));
 			const uint32 * const sa = sorter->get_sa();
-			write_byte_string(sa, ((len_eof) * sizeof(uint32)), out_name);
+			write_byte_string(sa, len_bytes, out_sa_name);
+
+			if (vm.count("lcp")) {
+				const uint32 * const lcp = sorter->get_lcp();
+				write_byte_string(lcp, len_bytes, out_lcp_name);
+			}
 		}
 
 		std::cerr << SELF << ": done" << std::endl;
